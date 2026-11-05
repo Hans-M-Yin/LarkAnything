@@ -18,6 +18,10 @@ jobs:
           xcrun swift --version
           xcrun --sdk macosx --show-sdk-version
       - run: npm ci --omit=dev --ignore-scripts
+      - name: Check install and uninstall scripts
+        run: |
+          for script in scripts/macos/*.sh; do bash -n "$script"; done
+          bash scripts/macos/test-guards.sh
       - run: npm test
       - run: npm run native:package:mac
       - uses: actions/upload-artifact@v4

@@ -12,6 +12,35 @@ Mac 原生界面使用 SwiftUI MenuBarExtra、NavigationSplitView、List、Toolb
 
 ## 在你的 Mac 上构建
 
+### 一键安装与卸载（推荐）
+
+在 Mac 拉取本分支后执行。脚本需要已安装的 Xcode 与 ARM64 Node.js 22+，不使用 sudo，也不自动更新 Git 分支。
+
+```bash
+git pull --ff-only
+bash scripts/macos/install.sh
+```
+
+安装脚本依次执行 `npm ci --omit=dev --ignore-scripts`、`npm test`、`npm run native:build`，验证签名后安装到 `~/Applications/LarkAnything Native Test.app` 并打开。加 `--no-open` 可只安装不启动。重新执行可更新本脚本安装的旧版本，构建失败时保留旧 App。
+
+测试后先从菜单栏退出 LarkAnything，再卸载：
+
+```bash
+bash scripts/macos/uninstall.sh
+```
+
+需要下一轮完全重新编译 Swift 时：
+
+```bash
+bash scripts/macos/uninstall.sh --clean-build
+git pull --ff-only
+bash scripts/macos/install.sh
+```
+
+卸载只移除脚本管理的测试 App；`--clean-build` 额外清理当前仓库 `native/macos/.build`。保留飞书授权、`~/.larkanything` 配置与发布回执，避免丢失原文档同步关联。也保留源码、构建日志与 DMG。通过 DMG 手动拖入 `/Applications` 的 App 不由这套脚本卸载。
+
+### 分步构建
+
 将源码解压到 Mac；不要复制 Windows 的 node_modules。推荐使用 nodejs.org 提供的独立 ARM64 Node。Homebrew Node 若依赖外部动态库，脚本会停止并说明原因，避免生成只能在构建机运行的安装包。
 
 ```bash
