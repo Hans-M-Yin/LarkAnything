@@ -113,7 +113,7 @@ test('Missing Lark CLI is installed privately from the official package', async 
   assert.equal(result.larkCli.status, 'ready');
   assert.ok(result.larkCli.executable.startsWith(join(result.prefix, 'tools')));
   assert.ok(setup.calls.some(c => c.args.includes('@larksuite/cli@1.0.98') && !c.args.includes('--global')));
-  assert.ok(setup.calls.some(c => c.args[0]?.endsWith('scripts/install.js')));
+  assert.ok(setup.calls.some(c => c.args[0]?.endsWith(join('scripts', 'install.js'))));
 });
 
 test('Preview-only installation skips Lark CLI and agent selection is explicit', async t => {
