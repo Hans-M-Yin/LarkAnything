@@ -1,0 +1,7 @@
+{
+  "name": "larkanything",
+  "version": "0.1.0",
+  "description": "Export selected local AI conversations to editable Feishu/Lark documents.",
+  "skills": "./skills/",
+  "requires_local_executor": true
+}

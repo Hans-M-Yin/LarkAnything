@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "stateDir": "../.larkanything/state",
+  "defaults": {
+    "protocol": "transcript",
+    "renderer": "markdown",
+    "format": { "locale": "zh-CN", "includeTools": false, "includeTimestamps": true, "includeModels": true, "mergeConsecutiveAssistant": true, "timeZone": "Asia/Shanghai", "showMetadata": true, "separators": true, "unsupported": "warn" },
+    "target": { "backend": "lark-cli", "operation": "create", "namespace": "personal" }
+  },
+  "channels": {
+    "codex": { "format": { "assistantLabel": "Codex" } },
+    "claude-code": { "format": { "assistantLabel": "Claude Code" } },
+    "chatgpt": { "format": { "assistantLabel": "ChatGPT" } }
+  },
+  "profiles": {
+    "readable": { "format": { "includeTools": false } },
+    "engineering": { "format": { "includeTools": true, "includeTimestamps": true } }
+  },
+  "backends": { "lark-cli": { "identity": "user", "executable": "lark-cli", "timeoutMs": 120000 } }
+}

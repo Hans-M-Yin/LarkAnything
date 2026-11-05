@@ -1,0 +1,8 @@
+{"type":"session_meta","payload":{"id":"demo-codex-session","source":"vscode"}}
+{"type":"response_item","payload":{"type":"message","id":"u1","role":"user","content":[{"type":"input_text","text":"请帮我设计一个可靠的对话导出工具，保留代码、表格和中文排版。"}]}}
+{"type":"event_msg","payload":{"type":"user_message","message":"请帮我设计一个可靠的对话导出工具，保留代码、表格和中文排版。"}}
+{"type":"response_item","payload":{"type":"message","id":"a1","role":"assistant","content":[{"type":"output_text","text":"## 设计目标\n\n将**对话内容**转换成团队可以直接阅读的文档，并保留来源。\n\n| 层次 | 职责 |\n| --- | --- |\n| Adapter | 读取各客户端的会话 |\n| Protocol | 决定导出范围和格式 |\n| Backend | 发布并验证飞书文档 |\n\n### 调用示例\n\n```javascript\nconst plan = await engine.plan({ channel: 'codex', input: 'session.jsonl' });\nconst receipt = await engine.publish(plan);\nconsole.log(receipt.remote.url);\n```\n\n> 同一份内容重复发布时，应返回原来的文档。"}]}}
+{"type":"response_item","payload":{"type":"function_call","name":"run_tests","call_id":"t1","arguments":"{\"command\":\"npm test\"}"}}
+{"type":"response_item","payload":{"type":"function_call_output","call_id":"t1","output":"Tests passed (synthetic example)."}}
+{"type":"response_item","payload":{"type":"message","id":"u2","role":"user","content":[{"type":"input_text","text":"很好。请说明首版边界。"}]}}
+{"type":"response_item","payload":{"type":"message","id":"a2","role":"assistant","content":[{"type":"output_text","text":"首版先支持**忠实导出**，并提供本地预览：\n\n1. 选择会话和飞书目标。\n2. 按格式协议准备文档。\n3. 发布后回读检查文字。\n\n- 支持中文、代码和普通表格。\n- 图片先保留链接。\n- 飞书最终视觉效果仍需打开文档确认。\n\n来源：[Lark CLI](https://github.com/larksuite/cli)。"}]}}

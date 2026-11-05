@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "kind": "conversation",
+  "id": "demo-generic-session",
+  "title": "任何客户端都能接入",
+  "source": { "channel": "custom-client", "completeness": "complete" },
+  "messages": [
+    { "id": "u1", "role": "user", "content": [{ "type": "text", "format": "plain", "text": "客户端只需要实现 ConversationV1。" }] },
+    { "id": "a1", "role": "assistant", "content": [{ "type": "text", "format": "markdown", "text": "**协议层**统一控制排版，下游后端负责发布。" }, { "type": "code", "language": "javascript", "text": "return { version: 1, id, title, source, messages };" }] }
+  ]
+}

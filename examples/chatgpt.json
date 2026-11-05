@@ -1,0 +1,10 @@
+{
+  "id": "demo-chatgpt-session",
+  "title": "AI 对话如何成为团队知识",
+  "current_node": "a1",
+  "mapping": {
+    "root": { "parent": null, "message": null },
+    "u1": { "parent": "root", "message": { "id": "g-u1", "author": { "role": "user" }, "content": { "content_type": "text", "parts": ["怎样保存有价值的 AI 对话？"] } } },
+    "a1": { "parent": "u1", "message": { "id": "g-a1", "author": { "role": "assistant" }, "content": { "content_type": "text", "parts": ["保留**完整原文**，再按需要制作结构化笔记。\n\n| 需求 | 结果 |\n| --- | --- |\n| 归档 | 按轮次保存问答 |\n| 分享 | 发布可编辑文档 |"] } } }
+  }
+}

@@ -1,0 +1,4 @@
+{"type":"user","uuid":"c-u1","parentUuid":null,"sessionId":"demo-claude-session","message":{"content":"请解释这个导出流程。"}}
+{"type":"assistant","uuid":"c-a1","parentUuid":"c-u1","sessionId":"demo-claude-session","message":{"content":[{"type":"text","text":"渠道解析 → 统一会话 → 格式协议 → 文档渲染 → 飞书发布。"},{"type":"tool_use","id":"tool1","name":"read_file","input":{"path":"example.md"}}]}}
+{"type":"user","uuid":"c-t1","parentUuid":"c-a1","sessionId":"demo-claude-session","message":{"content":[{"type":"tool_result","tool_use_id":"tool1","content":"A synthetic tool result."}]}}
+{"type":"assistant","uuid":"c-a2","parentUuid":"c-t1","sessionId":"demo-claude-session","message":{"content":[{"type":"text","text":"每层可以单独测试，也可以通过稳定接口替换。"}]}}

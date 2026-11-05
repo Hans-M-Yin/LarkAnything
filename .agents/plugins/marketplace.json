@@ -1,0 +1,7 @@
+{
+  "name": "larkanything",
+  "interface": { "displayName": "LarkAnything" },
+  "plugins": [
+    { "name": "larkanything", "source": { "source": "local", "path": "./" }, "category": "Productivity" }
+  ]
+}

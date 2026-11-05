@@ -1,0 +1,6 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "larkanything",
+  "version": "0.1.0",
+  "description": "Export selected AI conversations to readable, editable Feishu/Lark documents with format profiles and local previews."
+}
