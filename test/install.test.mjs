@@ -29,7 +29,7 @@ async function context(t, options = {}) {
       await mkdir(join(tools, 'node_modules/@larksuite/cli/scripts'), { recursive: true });
       return { stdout: '' };
     }
-    if (args[0]?.endsWith('scripts/install.js')) { nativeReady = true; return { stdout: '' }; }
+    if (args[0]?.endsWith(join('scripts', 'install.js'))) { nativeReady = true; return { stdout: '' }; }
     if (args[0] === '--version') {
       if (options.missingLark && (command === 'lark-cli' || !nativeReady)) throw new Error('not installed');
       return { stdout: 'fixture-version' };
