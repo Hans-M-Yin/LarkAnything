@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { invariant, LarkAnythingError } from '../core/errors.mjs';
-import { markdownReadbackText } from '../renderers/markdown.mjs';
+import { verifyMarkdownReadback } from './readback.mjs';
 
 export function runLarkCli(executable, args, { input, timeoutMs = 120000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -64,8 +64,8 @@ export class LarkCliBackend {
     const result = await this.call(['docs', '+fetch', '--doc', receipt.documentId, '--doc-format', 'markdown', '--detail', 'simple']);
     const document = result.data?.document;
     invariant(document?.document_id === receipt.documentId && typeof document.content === 'string', 'READBACK_RESPONSE', 'Readback returned an unexpected document.');
-    const actual = markdownReadbackText(document.content);
-    const expected = markdownReadbackText(plan.artifact.body);
-    return { passed: expected.length > 0 && actual.includes(expected), method: 'normalized-markdown-text', expectedCharacters: expected.length, visualVerified: false };
+    return verifyMarkdownReadback(plan.artifact.body, document.content, {
+      legacyMath: plan.artifact.warnings?.some(warning => warning.code === 'MATH_NOT_VERIFIED') === true,
+    });
   }
 }

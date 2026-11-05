@@ -123,3 +123,45 @@ test('Lark readback preserves authored spaces and code text when matching', asyn
   plan.artifact.body = '';
   assert.equal((await backend.verify({ documentId: 'd' }, plan)).passed, false);
 });
+
+test('Readback tolerates only source link boundaries and reports the normalization', async () => {
+  let content = '<title>Export</title>\n\n$paper-readhttps://example.com 读一下。';
+  const backend = new LarkCliBackend({}, async () => ({ ok: true, data: { document: { document_id: 'd', content } } }));
+  const plan = { artifact: { body: '[$paper-read](https://example.com/skill) [https://example.com](https://example.com) 读一下。' } };
+  const verified = await backend.verify({ documentId: 'd' }, plan);
+  assert.equal(verified.passed, true);
+  assert.deepEqual(verified.normalizations, ['link-boundary-whitespace']);
+  content = content.replace('读一下', '读');
+  const mismatch = await backend.verify({ documentId: 'd' }, plan);
+  assert.equal(mismatch.passed, false);
+  assert.equal(mismatch.difference.kind, 'text');
+});
+
+test('Readback never ignores code whitespace, indentation or lost code structure', async () => {
+  let content;
+  const backend = new LarkCliBackend({}, async () => ({ ok: true, data: { document: { document_id: 'd', content } } }));
+  for (const body of ['Use `a b` here.', '```python\nif ready:\n    run("a b")\n```']) {
+    const plan = { artifact: { body } };
+    content = body;
+    assert.equal((await backend.verify({ documentId: 'd' }, plan)).passed, true);
+    content = body.replace('a b', 'ab');
+    const mismatch = await backend.verify({ documentId: 'd' }, plan);
+    assert.equal(mismatch.passed, false);
+    assert.equal(mismatch.difference.kind, 'code');
+  }
+  content = 'a b';
+  assert.equal((await backend.verify({ documentId: 'd' }, { artifact: { body: '`a b`' } })).passed, false);
+});
+
+test('Saved plans reject a different configured backend identity before a write', async t => {
+  const { engine, plan, counts } = await setup(t);
+  engine.backends.get('test').scope = 'another-identity';
+  await assert.rejects(engine.publish(plan), { code: 'PLAN_IDENTITY' });
+  assert.equal(counts().writes, 0);
+});
+
+test('A fetched title cannot substitute for missing body text', async () => {
+  const backend = new LarkCliBackend({}, async () => ({ ok: true, data: { document: { document_id: 'd', content: '<title>Expected body</title>\n\nDifferent body' } } }));
+  const result = await backend.verify({ documentId: 'd' }, { artifact: { body: 'Expected body' } });
+  assert.equal(result.passed, false);
+});

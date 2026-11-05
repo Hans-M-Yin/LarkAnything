@@ -5,7 +5,7 @@ import { invariant } from './errors.mjs';
 export const DEFAULTS = {
   protocol: 'transcript', renderer: 'markdown',
   format: { locale: 'zh-CN', includeTools: false, includeTimestamps: true, includeModels: true, mergeConsecutiveAssistant: true, timeZone: 'UTC', showMetadata: true, separators: true, unsupported: 'warn' },
-  target: { backend: 'lark-cli', operation: 'create' },
+  target: { backend: 'lark-cli', operation: 'sync' },
 };
 
 const plainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);

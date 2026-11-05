@@ -1,18 +1,19 @@
 import { readFile } from 'node:fs/promises';
 import { LarkAnythingError } from '../core/errors.mjs';
 
-export async function readJsonLines(input) {
-  const text = await readFile(input, 'utf8');
+export async function readJsonLines(input, snapshot) {
+  const text = snapshot ?? await readFile(input, 'utf8');
   return text.split(/\r?\n/).flatMap((line, index) => {
     if (!line.trim()) return [];
     try { return [{ value: JSON.parse(line), line: index + 1 }]; }
-    catch { throw new LarkAnythingError('INVALID_JSONL', `Invalid JSON at line ${index + 1}. The input may be truncated; no content was published.`); }
+    catch { throw new LarkAnythingError('INVALID_JSONL', `Invalid JSON at line ${index + 1}. The input may be truncated; no content was published.`, { input, line: index + 1 }); }
   });
 }
 
 export const textPart = (text, format = 'markdown') => ({ type: 'text', text, format });
 export const toolPart = (name, text) => ({ type: 'tool', name: name || 'tool', text: typeof text === 'string' ? text : JSON.stringify(text, null, 2) });
 export const visibleContext = text => !/^\s*<(?:environment_context|user_instructions|permissions instructions|external_codex_apps_open_page)(?:\s|>)/.test(text);
+export const injectedSkill = text => /^\s*<skill>\s*<name>[^<]+<\/name>\s*<path>[^<]+<\/path>[\s\S]*<\/skill>\s*$/.test(text);
 
 export function contentParts(content) {
   if (typeof content === 'string') return content ? [textPart(content)] : [];

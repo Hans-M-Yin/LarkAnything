@@ -46,7 +46,10 @@ function clock(timeZone, unknown) {
 
 export const transcriptProtocol = {
   id: 'transcript', version: 1, inputKinds: ['conversation'],
-  format(model, options) {
+  selectMessages(model, options) {
+    return groupMessages(model, options).groups.flatMap(group => group.messages);
+  },
+  format(model, options, { append = false, groupOffset = 0 } = {}) {
     const keys = ['locale', 'includeTools', 'includeTimestamps', 'includeModels', 'mergeConsecutiveAssistant', 'timeZone', 'showMetadata', 'separators', 'unsupported', 'userLabel', 'assistantLabel', 'toolLabel'];
     for (const key of Object.keys(options)) invariant(keys.includes(key), 'PROTOCOL_OPTION', `Unknown transcript option: ${key}`);
     invariant(labels[options.locale], 'LOCALE', 'Supported transcript locales: zh-CN, en.');
@@ -57,9 +60,9 @@ export const transcriptProtocol = {
     const l = labels[options.locale], warnings = [...(model.warnings || [])], time = clock(options.timeZone, l.unknown);
     const { groups, excludedTools, publishedMessages, mergedAssistantMessages } = groupMessages(model, options);
     invariant(groups.length > 0, 'EMPTY_DOCUMENT', 'The selected protocol excluded all messages.');
-    const nodes = [{ type: 'heading', level: 1, text: l.transcript }];
+    const nodes = append ? [] : [{ type: 'heading', level: 1, text: l.transcript }];
     const visible = groups.flatMap(g => g.messages);
-    if (options.showMetadata) {
+    if (options.showMetadata && !append) {
       const userCount = visible.filter(m => m.role === 'user').length, replyCount = groups.filter(g => g.role === 'assistant').length;
       nodes.push({ type: 'metadata', text: options.locale === 'zh-CN'
         ? `${l.source}：${model.source.channel} · ${userCount} 条用户消息 · ${replyCount} 段回复 · ${publishedMessages} 条原始消息`
@@ -69,11 +72,11 @@ export const transcriptProtocol = {
         nodes.push({ type: 'metadata', text: `${l.period}: ${dates.length ? `${time(dates[0])} — ${time(dates.at(-1))}` : l.unknown} · ${options.timeZone}` });
       }
       nodes.push({ type: 'metadata', text: `${l.session}: ${model.id}` });
-    } else if (options.includeTimestamps) nodes.push({ type: 'metadata', text: options.timeZone });
+    } else if (options.includeTimestamps && !append) nodes.push({ type: 'metadata', text: options.timeZone });
     for (const [index, group] of groups.entries()) {
       if (options.separators) nodes.push({ type: 'divider' });
       const label = options[`${group.role}Label`] || l[group.role];
-      nodes.push({ type: 'heading', level: 2, text: `${String(index + 1).padStart(2, '0')} · ${label}`, sourceMessageId: group.messages[0].id, role: group.role });
+      nodes.push({ type: 'heading', level: 2, text: `${String(groupOffset + index + 1).padStart(2, '0')} · ${label}`, sourceMessageId: group.messages[0].id, role: group.role });
       const info = [];
       if (options.includeTimestamps) {
         const start = time(group.messages[0].timestamp), end = time(group.messages.at(-1).timestamp);

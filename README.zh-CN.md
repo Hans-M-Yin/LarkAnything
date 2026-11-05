@@ -21,12 +21,13 @@
 | --- | --- |
 | 本地 Markdown、HTML 预览、发布计划 | 已实现；完全离线 |
 | 飞书原生可编辑文档 | 已接入官方 lark-cli 的 Markdown 导入 |
-| 新建文档、向指定文档追加 | 已实现；文件夹/Wiki 父节点参数交由 CLI 处理 |
+| 按会话 ID 续写、新建文档、向指定文档追加 | 默认复用原文档，仅追加新增消息；支持文件夹/Wiki 父节点 |
 | 渠道格式偏好、命名配置、单次参数 | 已实现；支持逐层覆盖 |
 | 回复合并、时间与模型记录 | 同轮回复合并；开头集中显示时间范围和模型，公开过程引用展示 |
 | 重复发布识别、并发锁、失败回读 | 已实现；状态保存在本机 |
 | 图片 | 保留链接；嵌入数据/不可用附件明确标记，首版不上传 |
-| 公式、Mermaid | 保留源码并提示；不承诺原生渲染 |
+| 公式 | 识别 `$…$`、`$$…$$`、`\(…\)`、`\[…\]`，转换为飞书原生公式；本地预览离线渲染 |
+| Mermaid | 保留源码并提示；不承诺原生渲染 |
 
 首版是**本地执行的插件/CLI**。它不会往 Codex 原生界面添加按钮；一条导出指令或一条 CLI 命令启动整条流程。飞书最终视觉效果需要打开生成文档确认，HTML 仅作为本地阅读预览。
 
@@ -74,7 +75,9 @@ node bin/larkanything.mjs preview --channel claude-code --input /path/to/session
 node bin/larkanything.mjs preview --channel chatgpt --input /path/to/conversations.json --session YOUR_CONVERSATION_ID
 ```
 
-`list` 列出本机文件，不会上传。`preview` 生成 Markdown、HTML 和 `plan.json`，三者可能含私人对话，请自行选择保存位置。工具日志默认不进入导出结果；`--include-tools` 可以开启。
+`list` 不上传内容。Codex 会话按日志中的 `session_meta.id` 聚合，输出会话 ID、分段数和文件列表；`--session` 自动组装同一会话的本地分段，包括归档与带后缀的日志。`--input` 只处理指定文件，并将整个会话的完整性标记为未知。
+
+`preview` 生成 Markdown、HTML 和冻结的 `plan.json`，三者可能含私人对话，请自行选择保存位置。计划中的 `source.manifest` 记录各来源的路径、字节数、SHA-256、消息数量、排除的注入记录和去重数量。`complete` 仅表示准备时已发现的本机会话分段均被加载，不证明已删除、远端或 fork 父会话的历史可用。相同消息标识的内容冲突会停止导出；无法确认的重复或修订保留并警告，不按文本前缀删除。工具日志默认排除；`--include-tools` 可以开启。
 
 ### 阅读与元信息
 
@@ -89,6 +92,8 @@ node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --ti
 ```
 
 `--no-merge` 保留逐条消息标题，`--no-timestamps` 隐藏时间，`--no-models` 隐藏模型。对应配置为 `format.mergeConsecutiveAssistant`、`includeTimestamps`、`includeModels`、`timeZone`。合并仅改变展示分组，`publishedMessages` 仍统计原始消息数，`displayGroups` 统计展示分组数。
+
+公式在 Markdown 排版前提取，按官方 CLI 支持的 `<latex>…</latex>` 元素插入飞书，保留上下标、反斜杠、矩阵换行和中文 `\text{…}`，避免独立一行的 `=` 被当成标题。代码示例、转义的定界符及常见价格写法不转换。回读会检查公式源码和公式结构；旧计划中明确标有 `MATH_NOT_VERIFIED` 的发布重试仍采用原有文字校验，并在回执中标注 `legacy-math-as-text`。本地 HTML 使用 KaTeX 生成离线 MathML，预览无法解析时显示源码；飞书具体支持的 LaTeX 命令和视觉效果仍以实际文档为准。
 
 ## 连接飞书
 
@@ -114,12 +119,23 @@ lark-cli docs +fetch --help
 node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID
 ```
 
-该命令会先保存本地预览，再创建飞书文档、回读并核对完整的规范化文字序列，最终输出实际文档 URL/id。回读不验证字体、表格宽度或图片视觉效果。
+该命令独立完成来源组装、快照、格式转换、本地预览、飞书写入与回读，不需要 Agent 阅读日志或编写处理脚本。程序核对完整文字序列，明确报告链接边界的空白兼容处理，并严格比较代码内容、缩进与行内代码。回读不验证字体、表格宽度或图片视觉效果。
+
+默认采用 `--operation sync`：第一次发布创建文档，并在本机记录会话 ID、文档 ID 和已发布消息的 ID/哈希；同一会话继续聊天后再次执行该命令，只在原文档末尾追加新增消息，没有新增消息时不写入。消息编号继续累加，追加内容不重复整篇标题和会话元信息；文档开头的统计与时间范围仍表示首次导出的快照。匹配范围包括渠道、后端身份、namespace 和父目录，需使用同一状态目录及稳定会话 ID。旧配置若显式设置了 `create`，改为 `sync` 或单次指定 `--operation sync`。旧版回执没有会话关联，不能据此自动接续旧文档。
+
+发布已检查的预览，或在回读失败后重试，使用返回的 `output.plan` / `retry.plan`：
+
+```bash
+node bin/larkanything.mjs publish --plan /absolute/path/to/plan.json
+```
+
+保存的计划固定正文、目标和导出键，不会再次读取仍在增长的会话。已有远端回执时只重试校验；错误 JSON 提供文档 URL/id、差异诊断和重试计划。写入结果未知时仍停止自动重放。Agent 应报告程序结果，不能通过删除全部空白或另写验证文件覆盖失败状态。
 
 指定目标与格式：
 
 ```bash
 node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --parent-token FOLDER_OR_WIKI_NODE_TOKEN
+node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID --operation create
 node bin/larkanything.mjs publish --channel claude-code --input /path/session.jsonl --operation append --document DOCUMENT_URL_OR_ID
 node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --config examples/larkanything.config.json --profile engineering
 ```
@@ -197,14 +213,15 @@ await engine.publish(plan);
 ## 可靠性与边界
 
 - 回执区分 `publishing`、`written`、`verified`、`verification_failed`、`uncertain`。
-- 相同内容和目标生成相同 fingerprint，已验证的发布返回原回执。命名 key 与不同内容发生冲突时直接报错。
-- 写入结果未知时不自动重发。已获得文档 id 但回读失败时，再执行同一命令只重试回读。
+- 已验证的冻结计划再次发布时返回原回执。命名 key 绑定一次发布快照，与不同计划发生冲突时直接报错；日常增量推送无需指定 key。
+- 写入结果未知时不自动重发。已获得文档 id 但回读失败时，用 `publish --plan` 重试同一冻结计划，只进行回读。
 - 幂等保证限于**同一状态目录**；多机器/多用户需要共享 ReceiptStore。首版没有分布式事务或自动 exactly-once 保证。
-- `append` 追加本次选定的整个导出内容；尚未实现仅追加新增消息。修改内容后再追加可能重复已有文字，请明确选择来源范围。
+- 默认 `sync` 按会话关联和消息 checkpoint 仅追加新增消息。已发布历史被修改、截断或切换分支时停止并报告 `SYNC_HISTORY_CHANGED`；尚未完成的发布必须先用原冻结计划恢复。过期计划会报告 `SYNC_STALE_PLAN`，重新准备后再推送。
+- 显式 `create` 创建独立文档，显式 `append --document ...` 追加本次选定的整个导出内容，后者仍可能重复已有文字。这两种操作不建立自动会话关联。
 - 不覆写已有文档，不做双向同步、摘要、自动分享、通知或后台监控。
 - Codex fork 父会话不会自动合并，Claude Code/ChatGPT 按选定分支导出；缺失内容、转换限制和工具日志排除会写入报告。
 - 首版仅解析本机实际存在的日志/用户提供的导出文件，不连接或抓取各 AI 客户端账户。日志格式不是稳定公开契约，需要持续维护真实样例兼容性。
-- 本地预览/计划含导出文字；回执仅保存状态和来源错误码，不保存正文。原始客户端日志保持原样。
+- 本地预览/计划含导出文字；回执保存状态、错误码和消息 ID/哈希，回读失败时可包含短差异片段，不保存完整正文。原始客户端日志保持原样。
 
 `--strict` 遇到已识别的来源/渲染限制会停止发布。通过本地测试与模拟后端，不等于已在你的飞书租户完成真实发布和视觉验收。
 
@@ -218,6 +235,6 @@ npm run demo
 
 当前测试覆盖分支选择、重复事件、格式覆盖、代码围栏、XML 转义、长文本、并发与未知写入结果，以及真实子进程边界下的模拟发布。
 
-接下来按能力逐步扩展：媒体与公式保真 → 更多客户端/浏览器入口 → 消息级增量发布与冲突检测 → GitHub/网页/本地文件来源 → 多维表格等输出类型。每一项都有独立的适配位置；未实现的能力不出现在运行时的 capabilities 中。
+接下来按能力逐步扩展：媒体与公式保真 → 更多客户端/浏览器入口 → 远端人工编辑的冲突处理 → GitHub/网页/本地文件来源 → 多维表格等输出类型。每一项都有独立的适配位置；未实现的能力不出现在运行时的 capabilities 中。
 
 MIT License。独立社区项目，与 OpenAI、Anthropic、飞书或 Lark 官方无隶属关系。

@@ -45,6 +45,7 @@
     "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo"
   },
   "dependencies": {
+    "katex": "0.18.0",
     "markdown-it": "15.0.3"
   },
   "devDependencies": {

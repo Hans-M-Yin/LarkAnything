@@ -5,7 +5,7 @@
     "protocol": "transcript",
     "renderer": "markdown",
     "format": { "locale": "zh-CN", "includeTools": false, "includeTimestamps": true, "includeModels": true, "mergeConsecutiveAssistant": true, "timeZone": "Asia/Shanghai", "showMetadata": true, "separators": true, "unsupported": "warn" },
-    "target": { "backend": "lark-cli", "operation": "create", "namespace": "personal" }
+    "target": { "backend": "lark-cli", "operation": "sync", "namespace": "personal" }
   },
   "channels": {
     "codex": { "format": { "assistantLabel": "Codex" } },

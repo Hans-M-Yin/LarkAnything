@@ -23,5 +23,5 @@ export function createLarkAnything({ config = {}, adapters = [], protocols = [],
 export { codexAdapter, claudeCodeAdapter, chatgptAdapter, genericAdapter, transcriptProtocol, markdownRenderer, LarkCliBackend, FileReceiptStore, Registry, ExportEngine };
 export { loadConfig, resolveOptions } from './core/config.mjs';
 export { validateConversation, validateSourceArtifact, MODEL_VERSION } from './core/model.mjs';
-export { discoverSessions, resolveSession } from './adapters/discovery.mjs';
+export { discoverSessions, resolveSession, resolveSessionSources } from './adapters/discovery.mjs';
 export { LarkAnythingError } from './core/errors.mjs';

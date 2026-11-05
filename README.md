@@ -21,12 +21,13 @@ LarkAnything provides a local CLI, an embeddable JavaScript SDK, and a Codex plu
 | --- | --- |
 | Local Markdown, HTML preview, and publish plan | Implemented; fully offline |
 | Native editable Feishu/Lark documents | Uses the official Lark CLI's Markdown import |
-| Create documents or append to a selected document | Implemented; folder/Wiki parent parameters are passed to the CLI |
+| Continue by conversation id, create documents or append to a selected document | Default: reuse the document and append only new messages; folder/Wiki parents supported |
 | Per-channel formatting, naming, and per-call options | Implemented with layered overrides |
 | Reply grouping, timestamps, and model metadata | Groups messages from the same reply; shows time range and model once at the top, with public progress in quotes |
 | Duplicate detection, concurrency locks, and failure readback | Implemented with local state |
 | Images | Links are preserved; embedded data and unavailable attachments are flagged. No image uploads in v0.1 |
-| Formulas and Mermaid | Source is preserved with a warning; native rendering is not guaranteed |
+| Formulas | `$…$`, `$$…$$`, `\(…\)` and `\[…\]` become native Feishu formulas; local previews render offline |
+| Mermaid | Source is preserved with a warning; native rendering is not guaranteed |
 
 This release is a **locally executed plugin/CLI**. It does not add a button to the native Codex interface: an instruction to your agent or a CLI command starts the export. Open the generated Feishu/Lark document to assess its final appearance; the HTML file is a local reading preview.
 
@@ -74,7 +75,9 @@ node bin/larkanything.mjs preview --channel claude-code --input /path/to/session
 node bin/larkanything.mjs preview --channel chatgpt --input /path/to/conversations.json --session YOUR_CONVERSATION_ID
 ```
 
-`list` lists local files without uploading them. `preview` writes Markdown, HTML, and `plan.json`; all three may contain private conversation text, so choose their location accordingly. Tool logs are excluded by default; use `--include-tools` to include them.
+`list` never uploads content. Codex results group files by their recorded `session_meta.id` and include the session id, segment count and source paths. `--session` automatically assembles matching local segments, including archived and suffixed logs. `--input` deliberately loads only that file and reports full conversation completeness as unknown.
+
+`preview` writes Markdown, HTML and a frozen `plan.json`; these may contain private conversation text. The plan's `source.manifest` records source paths, byte counts, SHA-256 fingerprints, message counts, excluded injected records and deduplication counts. `complete` covers discoverable local segments at preparation time, not deleted, remote or parent-fork history. Conflicting versions of one message identity stop the export. Ambiguous repeats or revisions are retained with diagnostics; text prefixes never justify deletion. Tool logs are excluded by default; use `--include-tools` to include them.
 
 ### Reading format and metadata
 
@@ -89,6 +92,8 @@ node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --ti
 ```
 
 Use `--no-merge` for individual message headings, `--no-timestamps` to hide timestamps, and `--no-models` to hide models. Configuration options are `format.mergeConsecutiveAssistant`, `includeTimestamps`, `includeModels`, and `timeZone`. Grouping only changes presentation: `publishedMessages` counts original messages, while `displayGroups` counts displayed groups.
+
+Math is extracted before Markdown formatting and published as the official CLI's native `<latex>…</latex>` elements, preserving subscripts, backslashes, matrix line breaks and Chinese `\text{…}`. Code examples, escaped delimiters and common prices stay literal. Readback checks formula source and structure. Frozen plans explicitly marked `MATH_NOT_VERIFIED` retain their original text-only verification on retry, recorded as `legacy-math-as-text`. Local previews use offline KaTeX MathML with a source fallback; Feishu's supported LaTeX commands and visual appearance still require live validation.
 
 ## Connect to Feishu/Lark
 
@@ -114,12 +119,23 @@ Confirm that `+create` and `+update` support `--doc-format markdown` and `--cont
 node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID
 ```
 
-This saves a local preview, creates a document, reads it back, checks the full normalized text sequence, and returns the actual document URL/id. Readback does not verify fonts, table widths, or image appearance.
+This command owns source assembly, snapshotting, conversion, preview, upload and readback. The agent does not need to inspect logs or write processing scripts. Verification checks the full text sequence, explicitly reports link-boundary whitespace compatibility, and strictly preserves code whitespace, indentation and inline-code structure. It does not verify fonts, table widths or image appearance.
+
+The default `--operation sync` creates a document on the first publish and records the conversation id, document id and published message ids/hashes locally. Running it again after more conversation appends only new messages to that document; unchanged exports perform no remote write. Message numbering continues without repeating the transcript heading or session metadata. The opening counts and time range remain the initial snapshot. Matching is scoped by channel, backend identity, namespace and parent destination, and requires the same state directory and a stable conversation id. If an existing config explicitly sets `create`, change it to `sync` or pass `--operation sync`. Legacy receipts lack conversation bindings and cannot automatically resume older documents.
+
+To publish a reviewed preview or retry failed readback, use the returned `output.plan` / `retry.plan`:
+
+```bash
+node bin/larkanything.mjs publish --plan /absolute/path/to/plan.json
+```
+
+The saved plan freezes the body, destination and export key without rereading a growing conversation. A known remote receipt retries verification only. Error JSON includes the document URL/id, difference diagnostics and retry plan. Uncertain writes remain blocked from automatic replay. Agents must report the program's result rather than override failures by deleting whitespace or writing their own verification files.
 
 Choose a destination and formatting profile:
 
 ```bash
 node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --parent-token FOLDER_OR_WIKI_NODE_TOKEN
+node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID --operation create
 node bin/larkanything.mjs publish --channel claude-code --input /path/session.jsonl --operation append --document DOCUMENT_URL_OR_ID
 node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --config examples/larkanything.config.json --profile engineering
 ```
@@ -197,14 +213,15 @@ The five replaceable interfaces are `Adapter`, `FormatProtocol`, `Renderer`, `Ba
 ## Reliability and limitations
 
 - Receipts distinguish `publishing`, `written`, `verified`, `verification_failed`, and `uncertain` states.
-- Identical content and destinations produce the same fingerprint. A verified publish returns the existing receipt. Reusing a named key with different content fails explicitly.
-- An unknown write result is not automatically retried. If a document id is known but readback failed, rerunning the same command retries readback only.
+- Republishing a verified frozen plan returns its existing receipt. A named key identifies one snapshot and conflicts with a different plan; routine incremental publishing needs no explicit key.
+- An unknown write result is not automatically retried. If a document id is known but readback failed, use `publish --plan` with the same frozen plan to retry readback only.
 - Idempotency is limited to **the same state directory**. Multiple machines/users need a shared ReceiptStore. v0.1 has no distributed transactions or automatic exactly-once guarantee.
-- `append` appends the entire selected export. Appending only new messages is not implemented. Appending modified content may repeat existing text; select the source range deliberately.
+- Default `sync` uses the conversation binding and message checkpoint to append only new messages. Edited, truncated or switched-branch history stops with `SYNC_HISTORY_CHANGED`. Finish pending publishes using their original frozen plan. `SYNC_STALE_PLAN` requires preparing a fresh plan before publishing.
+- Explicit `create` creates an independent document; explicit `append --document ...` appends the entire selected export and can repeat existing text. Neither operation creates an automatic conversation binding.
 - No overwriting existing documents, two-way sync, summaries, automatic sharing, notifications, or background monitoring.
 - Codex fork parents are not merged automatically. Claude Code and ChatGPT export the selected branch. Missing content, conversion limitations, and excluded tool logs are reported.
 - v0.1 reads locally available logs or user-supplied export files. It does not connect to or scrape AI client accounts. Log formats are not stable public contracts and require ongoing compatibility work with real examples.
-- Local previews/plans contain exported text. Receipts store status and source error codes, not the document body. Original client logs remain unchanged.
+- Local previews/plans contain exported text. Receipts store status, error codes and message ids/hashes; failed readback may include short difference excerpts, but not the full document body. Original client logs remain unchanged.
 
 `--strict` stops publication when a recognized source or rendering limitation is encountered. Passing local tests and a mock backend does not establish that publication and visual checks have succeeded in your own tenant.
 
@@ -218,6 +235,6 @@ npm run demo
 
 Tests cover branch selection, duplicate events, formatting overrides, code fences, XML escaping, long text, concurrency, unknown write results, and simulated publishing across real subprocess boundaries.
 
-Planned directions: media and formula fidelity → more clients and browser entry points → message-level incremental publishing and conflict detection → GitHub/web/local-file sources → additional outputs such as Bitable. Each has an extension point; unimplemented features are not advertised in runtime capabilities.
+Planned directions: media and formula fidelity → more clients and browser entry points → conflict handling for remote manual edits → GitHub/web/local-file sources → additional outputs such as Bitable. Each has an extension point; unimplemented features are not advertised in runtime capabilities.
 
 MIT License. An independent community project, not affiliated with OpenAI, Anthropic, Feishu, or Lark.
