@@ -1,0 +1,11 @@
+{
+  "appId": "com.larkanything.desktop",
+  "productName": "LarkAnything",
+  "directories": { "output": ".larkanything/releases" },
+  "files": ["desktop/main.mjs", "desktop/preload.cjs", "desktop/service.mjs", "desktop/dist/**", "src/**", "package.json"],
+  "extraMetadata": { "main": "desktop/main.mjs" },
+  "asar": true,
+  "mac": { "target": [{ "target": "dmg", "arch": ["arm64"] }], "category": "public.app-category.productivity", "artifactName": "LarkAnything-${version}-mac-${arch}.${ext}" },
+  "dmg": { "contents": [{ "x": 130, "y": 220 }, { "x": 410, "y": 220, "type": "link", "path": "/Applications" }] },
+  "win": { "target": "dir" }
+}

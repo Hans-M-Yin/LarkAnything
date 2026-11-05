@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 async function walk(path) {
   const result = [];
   for (const entry of await readdir(path, { withFileTypes: true })) {
-    if (['node_modules', '.larkanything', '.git'].includes(entry.name)) continue;
+    if (['node_modules', '.larkanything', '.git', '.build', '.swiftpm'].includes(entry.name)) continue;
     const child = join(path, entry.name);
     if (entry.isDirectory()) result.push(...await walk(child));
     else result.push(child);

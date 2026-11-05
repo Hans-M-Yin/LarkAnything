@@ -1,0 +1,37 @@
+import { _electron as electron } from 'playwright';
+import { mkdir, writeFile, copyFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import assert from 'node:assert/strict';
+const root = resolve('.larkanything/desktop-smoke');
+const vault = join(root, 'vault');
+const codexHome = join(root, 'codex');
+const claudeHome = join(root, 'claude');
+await mkdir(vault, { recursive: true });
+await mkdir(join(codexHome, 'sessions'), { recursive: true });
+await mkdir(join(claudeHome, 'projects'), { recursive: true });
+await copyFile('examples/codex.jsonl', join(codexHome, 'sessions/sample.jsonl'));
+await writeFile(join(vault, '灵感收集.md'), '# 灵感收集\n\n把值得留下的想法，整理到同一个地方。\n\n- 一段有价值的对话\n- 一篇正在完善的笔记\n\n```js\nconst idea = "Keep it simple";\n```');
+await writeFile(join(root, 'desktop.json'), JSON.stringify({ vault, codexHome, claudeHome }));
+await writeFile(join(root, 'config.json'), JSON.stringify({ version: 1, stateDir: 'state' }));
+const env = { ...process.env, LARKANYTHING_DESKTOP_HOME: root }; delete env.ELECTRON_RUN_AS_NODE;
+const app = await electron.launch({ args: ['desktop/main.mjs', `--user-data-dir=${join(root, 'electron')}`], env });
+try {
+  const page = await app.firstWindow();
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await page.locator('.item').first().waitFor({ timeout: 60000 });
+  await page.locator('.item').first().click();
+  await page.locator('iframe').waitFor();
+  assert.match(await page.frameLocator('iframe').locator('body').innerText(), /用户|Codex/);
+  await page.getByRole('button', { name: 'Obsidian', exact: true }).click();
+  await page.getByRole('button').filter({ hasText: '灵感收集' }).click();
+  await page.locator('iframe').waitFor();
+  assert.match(await page.frameLocator('iframe').locator('body').innerText(), /Keep it simple/);
+  await page.screenshot({ path: join(root, 'preview.png') });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByLabel('飞书保存位置').fill('https://example.feishu.cn/drive/folder/demo123');
+  await page.getByRole('button', { name: '保存设置', exact: true }).click();
+  await page.getByRole('button').filter({ hasText: '灵感收集' }).click();
+  await page.locator('footer strong').filter({ hasText: 'demo123' }).waitFor();
+  assert.deepEqual(errors, []);
+  console.log('Electron smoke passed: Codex discovery, Core preview, vault preview, settings, destination. No remote writes.');
+} finally { await app.close(); }

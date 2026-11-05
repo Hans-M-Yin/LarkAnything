@@ -42,13 +42,28 @@
     "setup": "node scripts/install.mjs",
     "test": "node --test",
     "check": "node scripts/check.mjs && tsc --project tsconfig.json",
-    "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo"
+    "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo",
+    "desktop:build": "node desktop/build.mjs",
+    "desktop:start": "npm run desktop:build && electron desktop/main.mjs",
+    "desktop:check": "tsc -p desktop/tsconfig.json",
+    "desktop:smoke": "node desktop/smoke.mjs",
+    "desktop:package:mac": "node scripts/package-mac.mjs",
+    "native:build": "node scripts/build-native-mac.mjs",
+    "native:package:mac": "node scripts/build-native-mac.mjs --dmg"
   },
   "dependencies": {
     "katex": "0.18.0",
     "markdown-it": "15.0.3"
   },
   "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "playwright": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "^7.0.2"
   }
 }
