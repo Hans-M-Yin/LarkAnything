@@ -9,7 +9,7 @@
 - Tauri/Rust 提供原生文件读写、排他锁、进程启动/超时/取消、文件选择和窗口控制。CLI 通过参数和标准输入调用，不经过 shell。
 - Node 路径实现按 MIT 许可保留 Windows/POSIX 行为；SHA-256 与原实现对照验证，保持会话身份和回执兼容。
 - 仍使用 `~/.larkanything/config.json`、`desktop.json` 和原 state 目录。不要删除原回执；未确认的写入仍然禁止自动重传。
-- 飞书 CLI 是独立依赖。优先使用设置中的路径；默认 `lark-cli` 会查找既有 `~/.larkanything/tools/node_modules/@larksuite/cli/bin/`、PATH 和 macOS Homebrew 常见路径。不会随 App 捆绑或重新实现。
+- 正式安装包内置官方飞书 CLI 1.0.98 原生程序、许可证与校验清单，不需要用户安装 Node.js 或 npm。默认使用内置连接组件；设置中明确选择的 CLI 路径仍优先。没有内置资源的开发版本会查找既有私有 CLI、PATH 和 macOS Homebrew 路径。连接引导仍需用户创建或连接飞书应用并完成账号授权。
 - Windows 使用系统 WebView2，macOS 使用系统 WKWebView。视觉与动画需要在两端分别验收；不能承诺不同浏览器内核像素完全一致。
 
 ## Windows 开发与打包
@@ -41,7 +41,7 @@ npm run desktop:start
 npm run desktop:package:win
 ```
 
-安装程序在 `src-tauri/target/release/bundle/nsis/`。主程序是 `src-tauri/target/release/larkanything-desktop.exe`。Windows 安装器在系统缺少 WebView2 时联网安装共享运行库；体积报告应将 App 本体、安装器、系统共享运行库和独立 CLI 分开。
+安装程序在 `src-tauri/target/release/bundle/nsis/`。Windows 安装器在系统缺少 WebView2 时联网安装共享运行库。不要只分发 `larkanything-desktop.exe`：安装包同时携带 `lark-cli/` 连接组件资源。体积报告应分别注明 App 本体、内置 CLI、安装器和系统共享 WebView2。
 
 卸载用 Windows“设置 → 应用 → LarkAnything → 卸载”。不会删除 `~/.larkanything` 中的配置和回执，也不卸载独立 CLI。再次安装可继续测试。
 
@@ -69,6 +69,7 @@ bash scripts/tauri-mac-uninstall.sh
 npm test
 npm run desktop:check
 npm run desktop:build
+node scripts/prepare-tauri-release.mjs
 cargo build --manifest-path src-tauri/Cargo.toml
 npm run desktop:smoke
 ```
@@ -104,7 +105,7 @@ Windows smoke 测试启动真正的 Tauri/WebView2，使用隔离配置与本地
 
 ## 视觉精修
 
-应用图标源文件为 desktop/assets/larkanything.svg，图形结合 L 形与上行箭头。通过 Tauri icon 命令生成 Windows ICO / macOS ICNS。界面采用青绿色点缀和中性色背景。
+应用采用蓝青玻璃折页图标，源文件为 `desktop/assets/brand/larkanything-icon.svg`。通过 Tauri icon 命令生成 Windows ICO / macOS ICNS；构建脚本监听图标变更，避免增量打包复用旧资源。界面使用蓝青冷色点缀和中性色背景。
 
 Inter Variable 与 Noto Sans SC 常用字子集离线打包，后者改名 Lark UI CJK，约 1.96 MB；加上 Inter 约 2.31 MB。生僻字使用系统中文字体回退。字体原始许可证随应用分发，中文子集构建脚本为 scripts/prepare-ui-font.py。
 

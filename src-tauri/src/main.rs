@@ -50,6 +50,7 @@ struct NativeState {
     root: PathBuf,
     home: PathBuf,
     state_dir: PathBuf,
+    bundled_cli: Option<PathBuf>,
     selected: Mutex<Vec<PathBuf>>,
     locks: Mutex<HashMap<String, File>>,
     children: Mutex<HashMap<String, Running>>,
@@ -128,6 +129,16 @@ impl NativeState {
         let configured = config["backends"]["lark-cli"]["executable"]
             .as_str()
             .unwrap_or("lark-cli");
+        let bundled = self.bundled_cli.as_ref().filter(|p| p.is_file());
+        // The web worker can request only the saved executable or this exact
+        // native-resolved resource while the default component is selected.
+        if configured == "lark-cli" {
+            if let Some(path) = bundled {
+                if requested == "lark-cli" || Path::new(requested) == path {
+                    return Ok(path.clone());
+                }
+            }
+        }
         if requested != configured {
             return Err(failure("CLI does not match saved configuration", "EACCES"));
         }
@@ -188,7 +199,7 @@ fn bootstrap(window: tauri::WebviewWindow, state: State<NativeState>) -> Result<
         .filter_map(|key| std::env::var(key).ok().map(|v| (key.to_string(), v)))
         .collect();
     Ok(
-        json!({"home":state.home,"root":state.root,"cwd":state.home,"pid":std::process::id(),"platform":if cfg!(windows) {"win32"} else if cfg!(target_os="macos") {"darwin"} else {"linux"},"env":env}),
+        json!({"home":state.home,"root":state.root,"cwd":state.home,"pid":std::process::id(),"platform":if cfg!(windows) {"win32"} else if cfg!(target_os="macos") {"darwin"} else {"linux"},"env":env,"bundledExecutable":state.bundled_cli}),
     )
 }
 fn create_file(path: &Path, exclusive: bool) -> std::io::Result<File> {
@@ -621,6 +632,7 @@ fn main() {
         root,
         home,
         state_dir,
+        bundled_cli: None,
         selected: Mutex::new(vec![]),
         locks: Mutex::new(HashMap::new()),
         children: Mutex::new(HashMap::new()),
@@ -638,7 +650,20 @@ fn main() {
         }))
     };
     let app = builder
-        .manage(state)
+        .setup(move |app| {
+            let mut state = state;
+            // Debug fixtures always exercise their explicit fake CLI and never
+            // discover the real packaged component or credentials by accident.
+            if !cfg!(debug_assertions) {
+                let name = if cfg!(windows) { "lark-cli.exe" } else { "lark-cli" };
+                let path = app.path().resource_dir()?.join("lark-cli").join(name);
+                if path.is_file() {
+                    state.bundled_cli = Some(path);
+                }
+            }
+            app.manage(state);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             bootstrap,
             native,
@@ -656,4 +681,32 @@ fn main() {
             }
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn packaged_cli_is_default_without_overriding_or_bypassing_saved_choice() {
+        let root = std::env::temp_dir().join(format!("la-cli-resolver-{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(&root).unwrap();
+        let bundled = root.join("bundled.exe");
+        fs::write(&bundled, b"fixture").unwrap();
+        let state = NativeState {
+            root: root.clone(), home: root.clone(), state_dir: root.join("state"),
+            bundled_cli: Some(bundled.clone()), selected: Mutex::new(vec![]),
+            locks: Mutex::new(HashMap::new()), children: Mutex::new(HashMap::new()),
+            compact: Mutex::new(None),
+        };
+        assert_eq!(state.executable("lark-cli").unwrap(), bundled);
+        assert_eq!(state.executable(bundled.to_str().unwrap()).unwrap(), bundled);
+        let other = root.join("other.exe");
+        assert_eq!(state.executable(other.to_str().unwrap()).unwrap_err()["code"], "EACCES");
+        fs::write(root.join("config.json"), json!({"backends":{"lark-cli":{"executable":other}}}).to_string()).unwrap();
+        assert_eq!(state.executable(other.to_str().unwrap()).unwrap(), other);
+        assert_eq!(state.executable("lark-cli").unwrap_err()["code"], "EACCES");
+        assert_eq!(state.executable(bundled.to_str().unwrap()).unwrap_err()["code"], "EACCES");
+        fs::remove_dir_all(root).unwrap();
+    }
 }

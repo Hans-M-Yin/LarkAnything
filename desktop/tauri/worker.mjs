@@ -9,7 +9,7 @@ onmessage = async ({ data }) => {
     if (data.method === 'initialize') {
       initialize(data.args[0]);
       const { DesktopService } = await import('../service.mjs');
-      service = new DesktopService({ root: data.args[0].root });
+      service = new DesktopService({ root: data.args[0].root, bundledExecutable: data.args[0].bundledExecutable || undefined });
       service.sources = createSources();
     } else if (data.method === 'connectNotion') {
       value = await service.sources.connectNotion(...data.args);

@@ -65,7 +65,7 @@ export class DesktopService {
     const engine = await this.engine(), options = engine.backends.get('lark-cli').options;
     const auth = await this.authInspector(options.executable, options.configDir);
     const base = { appId: auth.appId || '', brand: auth.brand || 'feishu', bundled: !!this.bundledExecutable };
-    if (auth.exitCode === 'ENOENT') return { ...base, stage: 'cli', message: '未找到飞书 CLI，请在高级设置中选择已安装的 CLI。轻量版不捆绑飞书 CLI。' };
+    if (auth.exitCode === 'ENOENT') return { ...base, stage: 'cli', message: this.bundledExecutable ? '找不到所选连接组件。可切换到安装包内置的飞书连接组件。' : '未找到飞书连接组件，请重新安装完整安装包，或在高级设置中选择已安装的 CLI。' };
     if (auth.userAvailable) return { ...base, stage: 'ready', message: '当前 App 已读取到登录凭证，可检查连接或开始整理内容。' };
     if (auth.botAvailable) return { ...base, stage: 'login', message: '飞书应用已就绪，请授权你的账号。' };
     if (auth.status === 'unavailable' && auth.type !== 'config') return { ...base, stage: 'error', message: `暂时无法检查连接${auth.subtype ? `（${auth.subtype}）` : ''}，请检查 CLI 和系统凭证存储后重试。` };

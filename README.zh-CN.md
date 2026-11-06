@@ -1,5 +1,7 @@
 # LarkAnything
 
+> **安装桌面 App：** 前往 [GitHub Releases](https://github.com/Hans-M-Yin/LarkAnything/releases) 下载 Windows 安装程序或 Apple Silicon DMG，无需开发工具。[安装说明](docs/DESKTOP-INSTALL.md)。
+
 > 本工作区是最新版本的 **Tauri 轻量迁移副本**。桌面构建、Windows 安装和 Apple Silicon DMG 的最新说明见 [TAURI-MIGRATION.md](TAURI-MIGRATION.md)；下方历史 Electron / SwiftUI 说明不再是本副本的桌面入口。
 
 [English](README.md) | **简体中文**

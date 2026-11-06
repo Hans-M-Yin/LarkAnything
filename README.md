@@ -1,5 +1,7 @@
 # LarkAnything
 
+> **Install the desktop app:** download the Windows installer or Apple Silicon DMG from [GitHub Releases](https://github.com/Hans-M-Yin/LarkAnything/releases). No development tools required. [Installation guide](docs/DESKTOP-INSTALL.md).
+
 > This workspace is the **Tauri lightweight migration** of the latest app. See [TAURI-MIGRATION.md](TAURI-MIGRATION.md) for current desktop build, Windows installer and Apple Silicon DMG instructions. Historical Electron/SwiftUI instructions below are not this copy's desktop entry points.
 
 **English** | [简体中文](README.zh-CN.md)

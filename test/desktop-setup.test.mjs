@@ -82,3 +82,21 @@ test('Core CLI calls use the same explicit config directory as desktop authoriza
   const result = await runLarkCli(process.execPath, ['-e', 'console.log(JSON.stringify({ok:true,data:{config:process.env.LARKSUITE_CLI_CONFIG_DIR}}))'], { configDir: '/fixture/config' });
   assert.equal(result.data.config, '/fixture/config');
 });
+
+test('packaged CLI works on first launch and repairs a missing custom path only when selected', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'la-bundled-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const bundledExecutable = join(root, 'component', 'lark-cli');
+  const custom = join(root, 'missing-cli');
+  const s = new DesktopService({ root, bundledExecutable, authInspector: async executable => executable === bundledExecutable ? { status: 'unavailable', type: 'config' } : { exitCode: 'ENOENT' } });
+  assert.equal((await s.setupStatus()).stage, 'app');
+  const original = { version: 1, defaults: { target: { parentToken: 'saved-folder' } }, backends: { 'lark-cli': { executable: custom, configDir: join(root, 'existing-profile') } } };
+  await writeFile(join(root, 'config.json'), JSON.stringify(original));
+  const status = await s.setupStatus();
+  assert.equal(status.stage, 'cli'); assert.equal(status.bundled, true);
+  assert.equal((await s.engine()).backends.get('lark-cli').options.executable, custom);
+  assert.equal((await s.useBundledCli()).stage, 'app');
+  const saved = JSON.parse(await readFile(join(root, 'config.json'), 'utf8'));
+  assert.equal(saved.backends['lark-cli'].executable, 'lark-cli');
+  assert.equal(saved.backends['lark-cli'].configDir, original.backends['lark-cli'].configDir);
+  assert.deepEqual(saved.defaults, original.defaults);
+});
