@@ -6,6 +6,26 @@ import { join } from 'node:path';
 import { DesktopService } from '../desktop/service.mjs';
 import { createLarkAnything } from '../src/index.mjs';
 
+test('desktop connection failure happens before any write receipt; checks never create a document', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'la-check-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const calls = []; let fail = true;
+  const engine = createLarkAnything({ config: { stateDir: join(root, 'state') } });
+  engine.backends.get('lark-cli').runner = async (_exe, args) => {
+    calls.push(args);
+    if (fail) throw Object.assign(new Error('private message'), { code: 'LARK_CLI_ERROR', details: { exitCode: 3, type: 'authorization', subtype: 'missing_scope', missingScopes: ['docx:document:create'] } });
+    return { ok: true, data: {} };
+  };
+  const service = new DesktopService({ root, engineFactory: () => engine });
+  const plan = await engine.plan({ channel: 'codex', input: 'examples/codex.jsonl' });
+  service.plans.set('test', { engine, plan });
+  await assert.rejects(service.publish('test'), { code: 'CONNECTION_CHECK_FAILED' });
+  assert.equal(await engine.store.get(plan.exportKey), undefined);
+  const stored = JSON.parse(await readFile(join(root, 'desktop-diagnostics.json'), 'utf8'));
+  assert.equal(stored.diagnostic.subtype, 'missing_scope');
+  fail = false; assert.equal((await service.checkConnection()).ok, true);
+  assert.ok(calls.filter(args => args.includes('+create')).every(args => args.includes('--dry-run')));
+});
+
 test('desktop settings preserve existing profiles and normalize destination links', async t => {
   const root = await mkdtemp(join(tmpdir(), 'la-desktop-')); t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, 'config.json'), JSON.stringify({ version: 1, profiles: { work: { target: { namespace: 'work' } } } }));

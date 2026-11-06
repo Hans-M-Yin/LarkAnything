@@ -7,5 +7,7 @@ node_modules/
 coverage/
 
 desktop/dist/
+desktop/tauri-dist/
+src-tauri/target/
 native/macos/.build/
 native/macos/.swiftpm/

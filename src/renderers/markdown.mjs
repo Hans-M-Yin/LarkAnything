@@ -34,7 +34,8 @@ function rewriteInline(line) {
       // An unmatched backtick is literal Markdown; it must not suppress escaping.
       output += run; i += run.length; continue;
     }
-    if (line[i] === '<') output += '\\<';
+    if (line[i] === '$') output += '\\$';
+    else if (line[i] === '<') output += '\\<';
     else if (line.slice(i, i + 2) === '![') { output += '[Image: '; i += 2; continue; }
     else output += line[i];
     i++;

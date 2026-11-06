@@ -1,5 +1,7 @@
 # LarkAnything
 
+> 本工作区是最新版本的 **Tauri 轻量迁移副本**。桌面构建、Windows 安装和 Apple Silicon DMG 的最新说明见 [TAURI-MIGRATION.md](TAURI-MIGRATION.md)；下方历史 Electron / SwiftUI 说明不再是本副本的桌面入口。
+
 [English](README.md) | **简体中文**
 
 **将 AI 对话导出为清晰易读、可编辑的飞书 / Lark 文档。**
@@ -93,7 +95,7 @@ node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --ti
 
 `--no-merge` 保留逐条消息标题，`--no-timestamps` 隐藏时间，`--no-models` 隐藏模型。对应配置为 `format.mergeConsecutiveAssistant`、`includeTimestamps`、`includeModels`、`timeZone`。合并仅改变展示分组，`publishedMessages` 仍统计原始消息数，`displayGroups` 统计展示分组数。
 
-公式在 Markdown 排版前提取，按官方 CLI 支持的 `<latex>…</latex>` 元素插入飞书，保留上下标、反斜杠、矩阵换行和中文 `\text{…}`，避免独立一行的 `=` 被当成标题。代码示例、转义的定界符及常见价格写法不转换。回读会检查公式源码和公式结构；旧计划中明确标有 `MATH_NOT_VERIFIED` 的发布重试仍采用原有文字校验，并在回执中标注 `legacy-math-as-text`。本地 HTML 使用 KaTeX 生成离线 MathML，预览无法解析时显示源码；飞书具体支持的 LaTeX 命令和视觉效果仍以实际文档为准。
+公式在 Markdown 排版前提取，计划和预览保留原始公式源码；后端发布时使用美元定界公式，避免 Markdown 导入误读 XML 实体。先按原行边界移除 TeX 行注释，再将源码换行替换为空格，保留矩阵分行命令、上下标和中文说明。回读应用相同规则，并在发生归一时记录 `math-source-layout`；公式内容、矩阵分行和代码仍严格比较。原始源码保存在本地计划中。代码保持原样，普通文本美元符号转义后发布。本地 HTML 使用离线 KaTeX MathML；飞书支持的具体命令及视觉效果以实际文档为准。旧计划明确带有 `MATH_NOT_VERIFIED` 时仍使用 `legacy-math-as-text` 兼容校验。
 
 ## 连接飞书
 

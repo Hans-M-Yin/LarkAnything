@@ -34,6 +34,88 @@ async function setup(t) {
     failWrite(value) { writeError = value; }, failRead(value) { readError = value; }, mismatch(value) { mismatch = value; } };
 }
 
+test('Explicit repair rebuilds a confirmed failed document and resumes incremental sync', async t => {
+  const c = await setup(t);
+  c.backend.capabilities.operations.push('overwrite');
+  c.mismatch(true);
+  const initial = await c.engine().plan(c.request);
+  await assert.rejects(c.engine().publish(initial), { code: 'READBACK_MISMATCH' });
+  const original = (await c.engine().store.get(initial.exportKey)).remote.documentId;
+  c.model.messages.shift(); // A corrected adapter now excludes injected context.
+  c.model.messages.push(message('new question'));
+  await assert.rejects(c.engine().plan(c.request), { code: 'SYNC_PENDING' });
+  const repair = await c.engine().plan({ ...c.request, repair: true });
+  assert.equal(repair.target.operation, 'overwrite');
+  assert.equal(repair.target.documentId, original);
+  assert.equal(repair.sync.repair, true);
+  assert.equal(repair.document.coverage.publishedMessages, 2);
+  c.mismatch(false);
+  assert.equal((await c.engine().publish(repair)).status, 'verified');
+  await c.engine().publish(repair);
+  assert.equal(c.writes.length, 2); // Replaying a verified repair does not overwrite again.
+  c.model.messages.push(message('after repair'));
+  const next = await c.engine().plan(c.request);
+  assert.equal(next.target.operation, 'append');
+  assert.equal(next.target.documentId, original);
+  assert.equal(next.document.coverage.publishedMessages, 1);
+  await c.engine().publish(next);
+  assert.equal(c.writes.length, 3);
+  await assert.rejects(c.engine().plan({ ...c.request, repair: true }), { code: 'SYNC_REPAIR_STATE' });
+});
+
+test('Failed repair readback retries the saved plan without overwriting twice', async t => {
+  const c = await setup(t);
+  c.backend.capabilities.operations.push('overwrite');
+  c.mismatch(true);
+  await assert.rejects(c.engine().publish(await c.engine().plan(c.request)), { code: 'READBACK_MISMATCH' });
+  const repair = await c.engine().plan({ ...c.request, repair: true });
+  await assert.rejects(c.engine().publish(repair), { code: 'READBACK_MISMATCH' });
+  c.mismatch(false);
+  await c.engine().publish(repair);
+  assert.equal(c.writes.length, 2);
+  assert.equal((await c.engine().plan(c.request)).sync.unchanged, true);
+});
+
+test('Repair refuses missing bindings and uncertain writes', async t => {
+  const c = await setup(t);
+  c.backend.capabilities.operations.push('overwrite');
+  await assert.rejects(c.engine().plan({ ...c.request, repair: true }), { code: 'SYNC_REPAIR_STATE' });
+  c.failWrite(true);
+  await assert.rejects(c.engine().publish(await c.engine().plan(c.request)), { code: 'WRITE_UNCERTAIN' });
+  await assert.rejects(c.engine().plan({ ...c.request, repair: true }), { code: 'SYNC_REPAIR_STATE' });
+  assert.equal(c.writes.length, 1);
+});
+
+test('Uncertain repairs can recover by strict readback without another write', async t => {
+  const c = await setup(t);
+  c.backend.capabilities.operations.push('overwrite');
+  c.mismatch(true);
+  await assert.rejects(c.engine().publish(await c.engine().plan(c.request)), { code: 'READBACK_MISMATCH' });
+  const repair = await c.engine().plan({ ...c.request, repair: true });
+  c.failWrite(true);
+  await assert.rejects(c.engine().publish(repair), { code: 'WRITE_UNCERTAIN' });
+  await assert.rejects(c.engine().recover(repair), { code: 'READBACK_MISMATCH' });
+  assert.equal((await c.engine().store.get(repair.exportKey)).status, 'uncertain');
+  c.mismatch(false);
+  assert.equal((await c.engine().recover(repair)).status, 'verified');
+  assert.equal((await c.engine().recover(repair)).reused, true);
+  assert.equal(c.writes.length, 2);
+  await assert.rejects(c.engine().recover({ ...repair, target: { ...repair.target, documentId: 'wrong' } }), { code: 'PLAN_MODIFIED' });
+  assert.equal((await c.engine().plan(c.request)).sync.unchanged, true);
+});
+
+test('Uncertain sync append recovers by readback and does not resend content', async t => {
+  const c = await setup(t);
+  await c.engine().publish(await c.engine().plan(c.request));
+  c.model.messages.push(message('new content'));
+  const append = await c.engine().plan(c.request);
+  c.failWrite(true);
+  await assert.rejects(c.engine().publish(append), { code: 'WRITE_UNCERTAIN' });
+  assert.equal((await c.engine().recover(append)).status, 'verified');
+  assert.equal((await c.engine().plan(c.request)).sync.unchanged, true);
+  assert.equal(c.writes.length, 2);
+});
+
 test('Default sync survives a restart, reuses the document and appends only new messages', async t => {
   const c = await setup(t);
   const firstPlan = await c.engine().plan(c.request);

@@ -1,5 +1,7 @@
 # LarkAnything
 
+> This workspace is the **Tauri lightweight migration** of the latest app. See [TAURI-MIGRATION.md](TAURI-MIGRATION.md) for current desktop build, Windows installer and Apple Silicon DMG instructions. Historical Electron/SwiftUI instructions below are not this copy's desktop entry points.
+
 **English** | [简体中文](README.zh-CN.md)
 
 **AI conversations → readable, editable Feishu/Lark documents.**
@@ -93,7 +95,7 @@ node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --ti
 
 Use `--no-merge` for individual message headings, `--no-timestamps` to hide timestamps, and `--no-models` to hide models. Configuration options are `format.mergeConsecutiveAssistant`, `includeTimestamps`, `includeModels`, and `timeZone`. Grouping only changes presentation: `publishedMessages` counts original messages, while `displayGroups` counts displayed groups.
 
-Math is extracted before Markdown formatting and published as the official CLI's native `<latex>…</latex>` elements, preserving subscripts, backslashes, matrix line breaks and Chinese `\text{…}`. Code examples, escaped delimiters and common prices stay literal. Readback checks formula source and structure. Frozen plans explicitly marked `MATH_NOT_VERIFIED` retain their original text-only verification on retry, recorded as `legacy-math-as-text`. Local previews use offline KaTeX MathML with a source fallback; Feishu's supported LaTeX commands and visual appearance still require live validation.
+Math is extracted before Markdown formatting. Plans and previews retain original formula source; the backend sends dollar-delimited formulas to avoid XML entities being interpreted as TeX during Markdown import. Transport removes TeX line comments at their original line boundaries, then replaces source newlines with spaces, preserving matrix row commands, subscripts and Chinese text. Readback applies the same rule and records `math-source-layout` when needed; formula content, row commands and code remain strictly checked. Original source stays in the local plan. Code stays literal; prose dollar signs are escaped. Local previews use offline KaTeX MathML; supported commands and visual appearance still require live validation. Frozen plans explicitly marked `MATH_NOT_VERIFIED` retain `legacy-math-as-text` verification.
 
 ## Connect to Feishu/Lark
 

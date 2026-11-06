@@ -12,7 +12,9 @@ export async function readJsonLines(input, snapshot) {
 
 export const textPart = (text, format = 'markdown') => ({ type: 'text', text, format });
 export const toolPart = (name, text) => ({ type: 'tool', name: name || 'tool', text: typeof text === 'string' ? text : JSON.stringify(text, null, 2) });
-export const visibleContext = text => !/^\s*<(?:environment_context|user_instructions|permissions instructions|external_codex_apps_open_page)(?:\s|>)/.test(text);
+// Match the complete browser-state envelope, not mentions in prose or code.
+const browserContext = /^\s*<external_browser_tabs>\s*<in-app-browser-context\s+source="ambient-ui-state">[\s\S]*<\/in-app-browser-context>\s*<\/external_browser_tabs>\s*$/;
+export const visibleContext = text => !/^\s*<(?:environment_context|user_instructions|permissions instructions|external_codex_apps_open_page)(?:\s|>)/.test(text) && !browserContext.test(text);
 export const injectedSkill = text => /^\s*<skill>\s*<name>[^<]+<\/name>\s*<path>[^<]+<\/path>[\s\S]*<\/skill>\s*$/.test(text);
 
 export function contentParts(content) {

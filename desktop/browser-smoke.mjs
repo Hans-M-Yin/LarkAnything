@@ -24,18 +24,20 @@ try {
   await page.addInitScript(() => {
     window.larkAnything = Object.fromEntries(['settings', 'saveSettings', 'list', 'preview'].map(method => [method, (...args) => window.serviceCall(method, args)]));
   });
+  await page.addInitScript(() => { window.larkAnything.setExpanded = async () => {}; });
+  await page.addInitScript(() => localStorage.setItem('la-setup-dismissed', '1'));
   await page.goto(pathToFileURL(resolve('desktop/dist/index.html')).href);
   await page.locator('.item').first().waitFor();
-  await page.screenshot({ path: join(root, 'home.png') });
-  await page.locator('.item').first().click(); await page.locator('iframe').waitFor();
+  await page.screenshot({ animations: 'disabled', path: join(root, 'home.png') });
+  await page.locator('.item').first().click(); await page.getByRole('button', { name: '预览', exact: true }).click(); await page.locator('iframe').waitFor();
   assert.match(await page.frameLocator('iframe').locator('body').innerText(), /用户|Codex/);
   await page.getByRole('button', { name: 'Obsidian', exact: true }).click();
   await page.getByRole('button').filter({ hasText: '灵感收集' }).click(); await page.locator('iframe').waitFor();
   assert.match(await page.frameLocator('iframe').locator('body').innerText(), /Keep it simple/);
-  await page.screenshot({ path: join(root, 'preview.png') });
+  await page.screenshot({ animations: 'disabled', path: join(root, 'preview.png') });
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByLabel('飞书保存位置').fill('https://example.feishu.cn/drive/folder/demo123');
-  await page.screenshot({ path: join(root, 'settings.png') });
+  await page.screenshot({ animations: 'disabled', path: join(root, 'settings.png') });
   await page.getByRole('button', { name: '保存设置', exact: true }).click();
   await page.getByRole('button').filter({ hasText: '灵感收集' }).click();
   await page.locator('footer strong').filter({ hasText: 'demo123' }).waitFor();

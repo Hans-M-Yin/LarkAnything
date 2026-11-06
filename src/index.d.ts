@@ -58,7 +58,7 @@ export interface Config {
   version?: 1; defaults?: ExportOptions; channels?: Record<string, ExportOptions>; profiles?: Record<string, ExportOptions>;
   backends?: Record<string, Record<string, unknown>>; stateDir?: string;
 }
-export interface ExportRequest { channel: string; input?: string; session?: string; title?: string; profile?: string; key?: string; overrides?: ExportOptions; sourceOptions?: SourceOptions }
+export interface ExportRequest { channel: string; input?: string; session?: string; title?: string; profile?: string; key?: string; repair?: boolean; overrides?: ExportOptions; sourceOptions?: SourceOptions }
 export interface PublishPlan {
   version: 1; source: { channel: string; artifactId: string; completeness: string; manifest?: SourceManifest };
   protocol: { id: string; version: number; options: Record<string, unknown> }; renderer: { id: string; version: number };
@@ -66,6 +66,7 @@ export interface PublishPlan {
   artifact: Artifact; fingerprint: string; exportKey: string; sync?: SessionCheckpoint;
 }
 export interface SessionCheckpoint {
+  repair?: boolean;
   key: string; previousExportKey: string | null;
   messages: Array<{ id: string; hash: string }>; displayGroups: number; unchanged: boolean;
 }
@@ -100,7 +101,7 @@ export class FileReceiptStore implements ReceiptStore {
   withLock<T>(key: string, action: () => Promise<T>): Promise<T>;
 }
 export class LarkCliBackend implements Backend {
-  constructor(options?: { executable?: string; identity?: 'user' | 'bot'; timeoutMs?: number }, runner?: (executable: string, args: string[], options: { input?: string; timeoutMs: number }) => Promise<unknown>);
+  constructor(options?: { executable?: string; identity?: 'user' | 'bot'; timeoutMs?: number; configDir?: string }, runner?: (executable: string, args: string[], options: { input?: string; timeoutMs: number; configDir?: string }) => Promise<unknown>);
   id: string; version: 1; scope: string; capabilities: Backend['capabilities'];
   publish(plan: PublishPlan): Promise<RemoteReceipt>; verify(receipt: RemoteReceipt, plan: PublishPlan): Promise<Verification>;
 }
@@ -110,6 +111,7 @@ export class ExportEngine {
   plan(request: ExportRequest): Promise<PublishPlan>;
   preview(plan: PublishPlan, directory: string): Promise<{ directory: string; artifact: string; html?: string; plan: string }>;
   publish(plan: PublishPlan): Promise<PublishReceipt>;
+  recover(plan: PublishPlan): Promise<PublishReceipt>;
 }
 export function createLarkAnything(options?: { config?: Config; adapters?: Adapter[]; protocols?: FormatProtocol[]; renderers?: Renderer[]; backends?: Backend[]; store?: ReceiptStore }): ExportEngine;
 export function validateConversation(value: unknown): ConversationV1;

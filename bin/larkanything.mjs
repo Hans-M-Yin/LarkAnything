@@ -34,6 +34,8 @@ Options:
   --document ID_OR_URL   Destination document for append
   --parent-token TOKEN   Destination folder/wiki node for create
   --strict               Stop on conversion/source limitations
+  --repair               Explicitly rebuild a failed sync document in place
+  --recover              Read-only recovery of an uncertain repair; requires --plan
 
 Publishing requires a working, authorized lark-cli. No credentials are stored
 by LarkAnything. Preview is fully local and never calls the Feishu backend.
@@ -44,14 +46,15 @@ try {
   const { values, positionals } = parseArgs({
     options: Object.fromEntries([
       ...['channel', 'input', 'session', 'config', 'profile', 'title', 'key', 'out', 'plan', 'locale', 'operation', 'document', 'parent-token', 'time-zone'].map(name => [name, { type: 'string' }]),
-      ...['include-tools', 'timestamps', 'no-timestamps', 'no-models', 'no-merge', 'strict', 'help'].map(name => [name, { type: 'boolean' }]),
+      ...['include-tools', 'timestamps', 'no-timestamps', 'no-models', 'no-merge', 'strict', 'repair', 'recover', 'help'].map(name => [name, { type: 'boolean' }]),
     ]), allowPositionals: true, strict: true,
   });
   const [command, ...extra] = positionals;
   if (values.help || !command) { console.log(help); process.exit(0); }
   if (extra.length) throw new Error('Unexpected positional arguments. Use --help.');
   if (!['list', 'preview', 'publish', 'status'].includes(command)) throw new Error(`Unknown command: ${command}`);
-  if (values.plan && (command !== 'publish' || Object.keys(values).some(key => !['plan', 'config'].includes(key)))) throw new Error('--plan requires publish and accepts only --config alongside it. Source, format and destination are frozen in the plan.');
+  if (values.recover && !values.plan) throw new Error('--recover requires --plan.');
+  if (values.plan && (command !== 'publish' || Object.keys(values).some(key => !['plan', 'config', 'recover'].includes(key)))) throw new Error('--plan requires publish and accepts only --config or --recover alongside it. Source, format and destination are frozen in the plan.');
   const config = await loadConfig(values.config);
   if (command === 'list') {
     console.log(JSON.stringify(await discoverSessions(values.channel), null, 2));
@@ -78,7 +81,7 @@ try {
       if (values.document) target.documentId = values.document;
       if (values['parent-token']) target.parentToken = values['parent-token'];
       const plan = values.plan ? JSON.parse(await readFile(resolve(values.plan), 'utf8'))
-        : await engine.plan({ channel: values.channel, input: values.input, session: values.session, title: values.title, profile: values.profile, key: values.key, overrides: { format, target } });
+        : await engine.plan({ channel: values.channel, input: values.input, session: values.session, title: values.title, profile: values.profile, key: values.key, repair: values.repair, overrides: { format, target } });
       const output = values.plan ? { plan: resolve(values.plan) }
         : await engine.preview(plan, resolve(values.out || `.larkanything/previews/${plan.fingerprint.slice(0, 16)}`));
       preparedOutput = output; preparedPlan = plan;
@@ -87,7 +90,7 @@ try {
         coverage: plan.document.coverage, warnings: plan.artifact.warnings,
         retry: { command: 'publish', plan: output.plan } };
       if (command === 'preview') console.log(JSON.stringify({ ok: true, ...summary }, null, 2));
-      else console.log(JSON.stringify({ ok: true, ...summary, receipt: await engine.publish(plan) }, null, 2));
+      else console.log(JSON.stringify({ ok: true, ...summary, receipt: await (values.recover ? engine.recover(plan) : engine.publish(plan)) }, null, 2));
     }
   }
 } catch (error) {

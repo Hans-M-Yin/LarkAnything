@@ -1,0 +1,2 @@
+Generated with the built-in image_gen tool. Concept for review, not yet installed as the application icon.
+Prompt: Refine the three flying page/bird shapes into clean flat vector-style artwork on a pure white background. Teal upper folded page, sky blue middle folded page, royal blue lower bird. Smooth curves, strong small-size silhouette, no text, no shadows, no bevels. Feishu-inspired visual language for LarkAnything, showing multiple sources converging into one flying document.

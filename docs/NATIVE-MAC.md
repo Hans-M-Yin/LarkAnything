@@ -1,5 +1,7 @@
 # macOS 原生版（SwiftUI / AppKit）
 
+> 此路线已停止作为主界面开发，保留用于历史参考。新版 Windows / macOS 共用 Electron + React 界面，请使用 [桌面版指南](DESKTOP.md)。本文的 native 命令与旧版 macOS Bash 安装脚本仍会构建原生原型。
+
 Mac 原生界面使用 SwiftUI MenuBarExtra、NavigationSplitView、List、Toolbar、Form 和 AppKit 文件选择器。文档预览使用禁用 JavaScript 与外部导航的 WKWebView。Core 作为随包附带的 Node 辅助进程，通过私有标准输入输出通信；没有开放 HTTP 端口。
 
 ## 支持范围

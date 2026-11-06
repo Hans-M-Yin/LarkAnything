@@ -20,7 +20,8 @@ try {
     const lark = args[0] === 'lark';
     const command = lark ? larkExecutable : process.execPath;
     const commandArgs = lark ? args.slice(1) : [join(runtimeRoot, 'bin/larkanything.mjs'), ...args, ...(configPath && !args.some(a => a === '--config' || a.startsWith('--config=')) ? ['--config', configPath] : [])];
-    const child = spawn(command, commandArgs, { stdio: 'inherit', shell: false, windowsHide: true });
+    const configDir = config.backends?.['lark-cli']?.configDir;
+    const child = spawn(command, commandArgs, { stdio: 'inherit', shell: false, windowsHide: true, env: lark && configDir ? { ...process.env, LARKSUITE_CLI_CONFIG_DIR: configDir } : process.env });
     child.on('error', () => { console.error('Could not start LarkAnything/Lark CLI. Rerun the installer or read the connection guide.'); process.exitCode = 1; });
     child.on('exit', code => { process.exitCode = code ?? 1; });
   }

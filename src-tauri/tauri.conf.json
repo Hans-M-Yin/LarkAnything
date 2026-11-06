@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LarkAnything",
+  "version": "0.1.0",
+  "identifier": "com.larkanything.desktop",
+  "build": { "beforeBuildCommand": "node desktop/tauri/build.mjs", "beforeDevCommand": "node desktop/tauri/build.mjs", "frontendDist": "../desktop/tauri-dist" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [{ "label": "main", "title": "LarkAnything", "width": 420, "height": 560, "minWidth": 380, "minHeight": 480, "backgroundColor": "#202020", "dragDropEnabled": false, "decorations": false }],
+    "security": { "csp": "default-src 'none'; script-src 'self'; worker-src 'self'; connect-src ipc: http://ipc.localhost; style-src 'self' 'unsafe-inline'; frame-src 'self' about:; img-src 'self' data:; font-src 'self' data:" }
+  },
+  "bundle": { "active": true, "targets": "all", "icon": ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"], "shortDescription": "把对话与文档整理到飞书", "windows": { "webviewInstallMode": { "type": "downloadBootstrapper" } }, "macOS": { "minimumSystemVersion": "13.0" } }
+}

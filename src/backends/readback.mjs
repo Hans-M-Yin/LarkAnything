@@ -1,5 +1,5 @@
 import MarkdownIt from 'markdown-it';
-import { protectMath } from '../renderers/math.mjs';
+import { protectMath, transportTex } from '../renderers/math.mjs';
 
 const md = new MarkdownIt({ html: false, linkify: false, typographer: false });
 const boundary = '\u0000link\u0000';
@@ -7,7 +7,10 @@ const escapePattern = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function canonical(body, linkBoundaries = false, legacyMath = false) {
   const blocks = [], codes = [], formulas = [];
-  const math = legacyMath ? { body, restore: text => text } : protectMath(body, { native: true });
+  // These are rendered Markdown documents, not source messages: backslash
+  // parentheses/brackets escape literal punctuation. Real formulas were
+  // emitted as <latex> and Feishu fetch exports them with dollar delimiters.
+  const math = legacyMath ? { body, restore: text => text } : protectMath(body, { native: true, markdownEscapes: true });
   const code = (kind, text) => {
     codes.push({ kind, text });
     // Encoding protects code whitespace from prose normalization and prevents
@@ -28,8 +31,9 @@ function canonical(body, linkBoundaries = false, legacyMath = false) {
     } else if (['fence', 'code_block'].includes(token.type)) blocks.push(code('block-code', token.content));
   }
   const text = math.restore(blocks.filter(Boolean).join(' ').trim(), formula => {
-    formulas.push(formula.tex);
-    return `\u0000math:${JSON.stringify(formula.tex)}\u0000`;
+    const tex = transportTex(formula.tex);
+    formulas.push(tex);
+    return `\u0000math:${JSON.stringify(tex)}\u0000`;
   });
   return { text, codes, formulas };
 }
@@ -39,6 +43,7 @@ export function verifyMarkdownReadback(expectedBody, actualBody, { legacyMath = 
   // Retry those with their original contract; native formulas can never opt out.
   legacyMath = legacyMath && !protectMath(expectedBody, { native: true }).formulas.some(formula => formula.native);
   const normalizations = legacyMath ? ['legacy-math-as-text'] : [];
+  if (!legacyMath && protectMath(expectedBody, { native: true }).formulas.some(f => transportTex(f.tex) !== f.tex)) normalizations.push('math-source-layout');
   // The fetch transport prepends document metadata; it is not body coverage.
   const body = actualBody.replace(/^\s*<title>[^\r\n]*<\/title>(?:\r?\n|$)/, '');
   const expected = canonical(expectedBody, false, legacyMath), actual = canonical(body, false, legacyMath);
