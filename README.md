@@ -4,7 +4,7 @@
 
 **AI conversations → readable, editable Feishu/Lark documents.**
 
-Export conversations from different AI clients through a shared formatting protocol. The long-term goal is to connect more sources with more Feishu/Lark collaboration tools; v0.1 focuses on exporting original conversation text.
+Export conversations from different AI clients through a shared formatting protocol. The long-term goal is to connect more sources with more Feishu/Lark collaboration tools; v0.1 focuses on faithfully exporting the original conversation text.
 
 LarkAnything provides a local CLI, an embeddable JavaScript SDK, and a Codex plugin/Skill package. No model API key is required, and no model is called to rewrite your conversation.
 
