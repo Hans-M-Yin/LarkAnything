@@ -1,4 +1,5 @@
 // Renderer state-machine test: fake Feishu setup; no network or real credentials.
+import './build-test-ui.mjs';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
@@ -29,7 +30,7 @@ try {
       checkConnection: async () => ({ ok: stage === 'ready', message: '账号读取和创建预检通过。' }),
     };
   });
-  await page.goto(pathToFileURL(resolve('desktop/dist/index.html')).href);
+  await page.goto(pathToFileURL(resolve('.larkanything/test-ui/index.html')).href);
   await page.getByRole('heading', { name: '连接飞书', exact: true }).waitFor();
   await page.getByRole('button', { name: '开始创建应用', exact: true }).waitFor();
   await page.screenshot({ animations: 'disabled', path: join(output, 'first-run.png') });

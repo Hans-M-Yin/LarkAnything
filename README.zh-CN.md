@@ -57,12 +57,12 @@ App 会列出可选内容，由你确认要上传哪一项，不会根据其他 
 
 ## 从源码开发
 
-桌面版采用 Tauri、Rust 和 React。当前桌面源码位于 [`codex/tauri-desktop` 分支](https://github.com/Hans-M-Yin/LarkAnything/tree/codex/tauri-desktop)，此次发布对应标签 `desktop-v0.1.0-preview.1`；默认分支尚未合并桌面实现。
+标准桌面版采用 Tauri、Rust 和 React，统一在 `main` 维护。已发布预览版仍对应标签 `desktop-v0.1.0-preview.1`。
 
-先克隆桌面分支，再参考 [Windows 与 Mac 构建说明](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/TAURI-MIGRATION.md)：
+开发与打包请参考 [Windows 与 Mac 构建说明](docs/BUILD.md)：
 
 ```bash
-git clone --branch codex/tauri-desktop https://github.com/Hans-M-Yin/LarkAnything.git
+git clone https://github.com/Hans-M-Yin/LarkAnything.git
 cd LarkAnything
 npm ci
 npm run check
@@ -70,6 +70,6 @@ npm run desktop:check
 npm test
 ```
 
-原生打包还需要 Rust 及对应平台的构建工具。[发布工作流](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/.github/workflows/desktop-release.yml) 分别构建 Windows x64 和 Apple Silicon 安装包，内置官方 CLI 并生成 SHA-256 校验清单。仓库暂留历史 Electron / SwiftUI 代码供参考，当前桌面构建入口使用 Tauri。
+原生打包还需要 Rust 及对应平台的构建工具。[发布工作流](.github/workflows/desktop-release.yml) 分别构建 Windows x64 和 Apple Silicon 安装包，内置官方 CLI 并生成 SHA-256 校验清单。历史 Electron / SwiftUI 实现可从 Git 历史回溯，当前桌面构建入口统一使用 Tauri。
 
 MIT License。独立社区项目，与 OpenAI、Anthropic、飞书或 Lark 官方无隶属关系。内置组件与字体保留各自许可证。

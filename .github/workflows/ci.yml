@@ -17,5 +17,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - run: npm run desktop:check
+      - run: npm run desktop:build
       - run: npm test
       - run: npm run demo

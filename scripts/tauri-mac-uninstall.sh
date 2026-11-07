@@ -8,4 +8,4 @@ if [[ -d "$app" ]]; then
   if pgrep -f "$app/Contents/MacOS/" >/dev/null; then echo '请先退出 LarkAnything。'; exit 1; fi
   rm -rf -- "$app"
 fi
-echo 'App 已卸载。配置、导出回执和飞书 CLI 均保留，重新安装可继续使用。'
+echo 'App 及其内置 CLI 已卸载。用户配置、导出回执和独立安装的 CLI 均保留。'

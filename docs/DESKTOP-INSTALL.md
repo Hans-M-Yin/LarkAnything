@@ -26,4 +26,4 @@
 - Mac：退出 App，用新版替换 Applications 中的应用；卸载时把应用移到废纸篓。
 - 卸载保留 `~/.larkanything` 中的用户设置和上传回执，避免更新后重复上传。删除 App 不等于撤销飞书授权。
 
-Release 同时提供 `SHA256SUMS.txt`，可核对安装包下载完整性。开发者构建说明见仓库中的 `TAURI-MIGRATION.md`。
+Release 同时提供 `SHA256SUMS.txt`，可核对安装包下载完整性。开发者构建说明见 [BUILD.md](BUILD.md)，当前标准源码在 `main`。

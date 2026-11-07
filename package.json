@@ -49,9 +49,7 @@
     "desktop:smoke": "node desktop/tauri/smoke.mjs",
     "desktop:setup:smoke": "node desktop/onboarding-smoke.mjs",
     "desktop:package:mac": "tauri build --bundles app,dmg",
-    "desktop:package:win": "tauri build --bundles nsis",
-    "native:build": "node scripts/build-native-mac.mjs",
-    "native:package:mac": "node scripts/build-native-mac.mjs --dmg"
+    "desktop:package:win": "tauri build --bundles nsis"
   },
   "dependencies": {
     "fast-xml-parser": "^5.12.0",

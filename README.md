@@ -57,12 +57,12 @@ For agent-driven exports, automation and custom integrations, see the [CLI, Skil
 
 ## Build from source
 
-Desktop development uses Tauri, Rust and React. The current desktop source is on [`codex/tauri-desktop`](https://github.com/Hans-M-Yin/LarkAnything/tree/codex/tauri-desktop); the release is pinned by tag `desktop-v0.1.0-preview.1`. The default branch has not yet incorporated the desktop implementation.
+The standard desktop app uses Tauri, Rust and React and is maintained on `main`. The published preview remains pinned by tag `desktop-v0.1.0-preview.1`.
 
-Clone the desktop branch before following the [Windows and Mac build instructions](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/TAURI-MIGRATION.md):
+Follow the [Windows and Mac build instructions](docs/BUILD.md):
 
 ```bash
-git clone --branch codex/tauri-desktop https://github.com/Hans-M-Yin/LarkAnything.git
+git clone https://github.com/Hans-M-Yin/LarkAnything.git
 cd LarkAnything
 npm ci
 npm run check
@@ -70,6 +70,6 @@ npm run desktop:check
 npm test
 ```
 
-Native packaging additionally requires Rust and platform build tools. [The release workflow](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/.github/workflows/desktop-release.yml) builds Windows x64 and Apple Silicon installers, bundles the official CLI, and produces SHA-256 checksums. Historical Electron and SwiftUI code remains for reference; the desktop build entry points use Tauri.
+Native packaging additionally requires Rust and platform build tools. [The release workflow](.github/workflows/desktop-release.yml) builds Windows x64 and Apple Silicon installers, bundles the official CLI, and produces SHA-256 checksums. Historical Electron and SwiftUI implementations remain available in Git history; current desktop build entry points use Tauri.
 
 MIT License. An independent community project, not affiliated with OpenAI, Anthropic, Feishu or Lark. Bundled components and fonts retain their respective licenses.
