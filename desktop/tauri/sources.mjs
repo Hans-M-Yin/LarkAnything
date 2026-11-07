@@ -29,10 +29,19 @@ export function createSources({transport = native, command = run} = {}){
    if(channel==='markdown')model=markdownSource(channel,hash(path),path.split(/[\\/]/).pop().replace(/\.md$/i,''),await transport('read',{path}));
    else model=docxSource(Uint8Array.from(await transport('read_bytes',{path})),path);
    const item={id:channel+':'+hash(path),title:model.title,excerpt:model.body.slice(0,140),location:path,modified:info.mtimeMs};
-   selected.set(item.id,{item,model});return item;
+   selected.set(item.id,{item,model,size:info.size});return item;
   },
   async list(channel){
-   if(['markdown','docx'].includes(channel))return [...selected.values()].filter(v=>v.model.source.channel===channel).map(v=>v.item);
+   if(['markdown','docx'].includes(channel)){
+    const records=[];
+    for(const value of [...selected.values()].filter(v=>v.model.source.channel===channel)){
+     try{
+      const info=await transport('stat',{path:value.item.location});
+      records.push(info.size===value.size&&info.mtimeMs===value.item.modified?value.item:await this.importFile(channel,value.item.location));
+     }catch(e){records.push({...value.item,error:`无法读取此文件，请确认文件仍存在且可访问。${e?.code?' ('+e.code+')':''}`});}
+    }
+    return records.sort((a,b)=>b.modified-a.modified);
+   }
    if(channel==='opencode'){
     await cliVersion();
     const rows=JSON.parse(await command(['session','list','--format','json']));

@@ -1,0 +1,9 @@
+{
+  "createdOn": "2026-11-07",
+  "producer": "Microsoft Word desktop on Windows, interactive UI",
+  "content": "Synthetic heading using Word Heading 1, Chinese body, number and emoji",
+  "originalSha256": "5d523fd422704682776a1688ffbb1d14d18269940a7d5ccd91f5f9d7a86648b6",
+  "fixtureSha256": "1602c6a104e78bc508f268e3b3749aa160eafe675caf44c4dfb921e928d72e36",
+  "sanitization": "Retain word/document.xml and word/styles.xml byte-for-byte; repack archive and exclude all other entries, including author metadata. This is a parser fixture, not a complete package intended for opening in Word.",
+  "liveValidation": "Original complete DOCX imported through the native Windows picker, previewed in Tauri, and published/read back through Core + real Feishu CLI. The committed fixture itself was not uploaded."
+}

@@ -1,0 +1,32 @@
+{
+  "ok": true,
+  "scope": "Real Tauri/WebView2, synthetic source data and fake publish CLI; no live account acceptance or OS file-picker automation.",
+  "checks": [
+    "real-tauri-webview2",
+    "worker-core-parity",
+    "claude-fixture-discovery-preview",
+    "source-icons-layout",
+    "unicode-preview",
+    "theme",
+    "settings",
+    "native-cli-local-publish-readback",
+    "uncertain-no-replay",
+    "exclusive-lock",
+    "path-scope",
+    "keyboard-shortcuts",
+    "preview-keyboard-focus",
+    "modal-keyboard-guards",
+    "streaming-cancel",
+    "timeout",
+    "reduced-motion",
+    "markdown-import-preview",
+    "docx-import-preview",
+    "opencode-fake-cli-preview"
+  ],
+  "screenshots": [
+    "home.png",
+    "preview.png",
+    "dark.png",
+    "word-source.png"
+  ]
+}

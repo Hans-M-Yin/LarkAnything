@@ -2,11 +2,35 @@ import assert from 'node:assert/strict';
 import { zipSync, strToU8 } from 'fflate';
 import { docxSource, openCodeSource } from '../../src/adapters/desktop-sources.mjs';
 import { createSources } from '../../desktop/tauri/sources.mjs';
+import { mkdtemp, writeFile, readFile, stat, utimes, unlink, rm } from 'node:fs/promises';
+import { join, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 
 const doc = (body, other = {}) => zipSync({ 'word/document.xml': strToU8(`<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`), ...Object.fromEntries(Object.entries(other).map(([k,v]) => [k,strToU8(v)])) });
 const paragraph = text => `<w:p><w:r><w:t>${text}</w:t></w:r></w:p>`;
 const exported = (parts, created = 1780000000000) => ({ info:{id:'ses_qa',title:'Synthetic QA'},messages:[{info:{id:'m1',role:'user',time:{created}},parts}] });
 export const cases = [
+ {id:'DOCX-007',source:'docx',level:'sanitized fixture from actual Microsoft Word UI save',title:'Word-generated localized heading and Unicode survive extraction',async run(){
+  const bytes=await readFile(new URL('../../test/fixtures/word-native-ui.docx',import.meta.url));
+  assert.equal(docxSource(bytes,'word-native-ui.docx').body,'# LarkAnything Word 验收标题\n\nQA-WORD-NATIVE-20261107 中文正文，数字 42，emoji 🙂。仅用于本地功能验收。');
+ }},
+ {id:'FILE-001',source:'markdown',level:'real local filesystem, synthetic content',title:'Refresh updates metadata and isolates missing files, then recovers',async run(){
+  const root=await mkdtemp(join(tmpdir(),'la-source-eval-'));
+  try{
+   const path=join(root,'中文 空格.MD'),other=join(root,'other.md');
+   await writeFile(path,'# First');await utimes(path,1,1);await writeFile(other,'# Other');
+   const source=createSources({transport:async(op,{path})=>{
+    if(op==='stat'){const s=await stat(path);return {size:s.size,mtimeMs:s.mtimeMs};}
+    assert.equal(op,'read');return readFile(path,'utf8');
+   }});
+   const item=await source.importFile('markdown',path);await source.importFile('markdown',other);
+   await writeFile(path,'# Updated body');await utimes(path,2000000000,2000000000);
+   const refreshed=(await source.list('markdown'))[0];assert.equal(refreshed.id,item.id);assert.match(refreshed.excerpt,/Updated body/);assert.ok(refreshed.modified>item.modified);
+   await unlink(path);const missing=await source.list('markdown');assert.equal(missing.length,2);assert.ok(missing.find(x=>x.id===item.id).error);assert.ok(!missing.find(x=>x.id!==item.id).error);
+   await assert.rejects(source.load('markdown',item));
+   await writeFile(path,'# Restored');const restored=(await source.list('markdown')).find(x=>x.id===item.id);assert.ok(!restored.error);assert.match(restored.excerpt,/Restored/);
+  }finally{assert.ok(resolve(root).startsWith(resolve(tmpdir())+sep+'la-source-eval-'));await rm(root,{recursive:true,force:true});}
+ }},
  {id:'DOCX-001',source:'docx',level:'synthetic OOXML',title:'Localized/custom heading style resolves through styles.xml',run(){
   const model=docxSource(doc('<w:p><w:pPr><w:pStyle w:val="1"/></w:pPr><w:r><w:t>QA heading</w:t></w:r></w:p>',{'word/styles.xml':'<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:styleId="1"><w:name w:val="heading 1"/><w:pPr><w:outlineLvl w:val="0"/></w:pPr></w:style></w:styles>'}),'qa.docx');
   assert.match(model.body,/^# QA heading$/m);

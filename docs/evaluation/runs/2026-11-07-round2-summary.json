@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-07",
+  "platform": "Windows x64",
+  "build": "local Tauri debug build with isolated App profile; not installed release acceptance",
+  "newDefectFixed": "FILE-001",
+  "offlineCases": {"passed": 19, "failed": 0},
+  "nodeTests": {"total": 143, "passed": 140, "failed": 0, "skipped": 3},
+  "uiObserved": {
+    "markdownPickerFilter": "passed: *.md",
+    "docxPickerFilter": "passed: *.docx",
+    "wordPickerCancel": "passed: dialog closed, zero imported items, upload disabled",
+    "unicodeSpaceUppercaseExtensionPath": "passed",
+    "markdownTableAndEmojiPreview": "passed",
+    "changedFileReselection": "passed: updated marker visible",
+    "deletedFileReselection": "passed: old preview cleared, ENOENT shown, upload disabled",
+    "wordNativeDocumentCreation": "passed via Word UI; prior COM attempt remains unsupported in this environment",
+    "wordNativePickerAndPreview": "passed: localized Heading 1, Chinese text and emoji",
+    "appButtonActualFeishuPublish": "passed: synthetic Markdown, completed and readback-verified status observed"
+  },
+  "realFeishu": {
+    "newSyntheticDocuments": 3,
+    "verifiedReceipts": 3,
+    "sources": ["Markdown through Core", "Word through Core", "Markdown through Tauri UI"],
+    "target": "existing default cloud drive",
+    "verificationMethod": "markdown-text-and-code",
+    "visualVerified": false,
+    "receiptsRetainedLocally": true
+  },
+  "regression": {"tauriNativeSmoke": "passed", "syntaxAndTypes": "passed", "desktopBuild": "passed"},
+  "remaining": ["Notion live integration", "Claude Code real generated session", "Obsidian editing client", "OpenCode real model conversations and native App invocation", "macOS", "installer lifecycle", "custom Feishu folder", "large inputs and long-running stability"],
+  "accountIdentifiersOmitted": true,
+  "releaseAcceptance": "incomplete"
+}
