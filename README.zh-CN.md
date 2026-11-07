@@ -1,6 +1,4 @@
-<img src="https://raw.githubusercontent.com/Hans-M-Yin/LarkAnything/desktop-v0.1.0-preview.1/desktop/assets/larkanything.png" width="80" alt="LarkAnything icon">
-
-# LarkAnything
+![LarkAnything](docs/assets/larkanything-banner.png)
 
 [English](README.md) | **简体中文**
 
