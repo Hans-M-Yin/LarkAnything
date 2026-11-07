@@ -27,3 +27,7 @@ Windows 使用 Ctrl、Mac 使用 Command：F 搜索，R 刷新，1 / 2 / 3 选�
 Windows 原生 smoke 使用隔离数据和模拟 CLI，覆盖 Tauri/WebView2、Core 预览、上传回读、防重复写入、路径权限、排他锁、超时与取消。Mac 安装、授权与 WKWebView 显示仍需真机验证。
 
 附件上传、复杂 DOCX 版式、自动更新和后台监控尚未实现。请保留上传回执。Windows 的可选登录重置测试工具保留在 `scripts/build-reset-login-windows.ps1`，正常安装无需使用。
+
+## 平台窗口行为
+
+macOS 通过 `src-tauri/tauri.macos.conf.json` 启用系统标题栏及真实红黄绿按钮，内容区不绘制自定义标题栏；Windows 保留自定义窗口按钮。Mac 关窗保留进程和连接，Dock 重新打开，Cmd+Q 退出。主题同时同步到原生窗口，应用快捷键优先使用原生平台标识。全屏/最大化时预览切换不重置窗口尺寸。

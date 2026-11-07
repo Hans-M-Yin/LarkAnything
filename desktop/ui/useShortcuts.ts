@@ -1,6 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 
-export const macShortcuts = /Mac|iPhone|iPad/.test(navigator.platform);
+export const macShortcuts = window.larkAnything?.platform
+  ? window.larkAnything.platform === 'darwin'
+  : /Mac|iPhone|iPad/.test(navigator.platform);
 export const shortcutLabel = (key: string) => `${macShortcuts ? '⌘' : 'Ctrl'} + ${key}`;
 export const shortcutAria = (key: string) => `${macShortcuts ? 'Meta' : 'Control'}+${key}`;
 

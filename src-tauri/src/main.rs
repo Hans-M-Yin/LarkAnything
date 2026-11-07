@@ -602,6 +602,13 @@ fn window_mode(
 ) -> Result<()> {
     checked_window(&window)?;
     let mut compact = state.compact.lock().unwrap();
+    // Keep the OS-managed full-screen / maximized geometry intact when the
+    // content preview changes. Do not restore an outdated compact position.
+    if window.is_fullscreen().map_err(|e| failure(e, "EWINDOW"))?
+        || window.is_maximized().map_err(|e| failure(e, "EWINDOW"))? {
+        compact.take();
+        return Ok(());
+    }
     if expanded && compact.is_none() {
         let size = window.inner_size().map_err(|e| failure(e, "EWINDOW"))?;
         let pos = window.outer_position().map_err(|e| failure(e, "EWINDOW"))?;
@@ -625,6 +632,16 @@ fn window_mode(
         }
     }
     Ok(())
+}
+#[tauri::command]
+fn window_theme(window: tauri::WebviewWindow, theme: String) -> Result<()> {
+    checked_window(&window)?;
+    let theme = match theme.as_str() {
+        "light" => tauri::Theme::Light,
+        "dark" => tauri::Theme::Dark,
+        _ => return Err(failure("Unknown theme", "EINVAL")),
+    };
+    window.set_theme(Some(theme)).map_err(|e| failure(e, "EWINDOW"))
 }
 #[tauri::command]
 fn window_action(window: tauri::WebviewWindow, action: String) -> Result<()> {
@@ -676,6 +693,18 @@ fn main() {
         }))
     };
     let app = builder
+        .on_window_event(|window, event| {
+            #[cfg(target_os = "macos")]
+            if window.label() == "main" {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    // The red button / Cmd-W closes the window, not the app.
+                    // Keep its WebView and connection state for Dock reopening.
+                    if window.hide().is_ok() { api.prevent_close(); }
+                }
+            }
+            #[cfg(not(target_os = "macos"))]
+            let _ = (window, event);
+        })
         .setup(move |app| {
             let mut state = state;
             // Debug fixtures always exercise their explicit fake CLI and never
@@ -695,11 +724,20 @@ fn main() {
             native,
             choose,
             window_mode,
-            window_action
+            window_action,
+            window_theme
         ])
         .build(tauri::generate_context!())
         .expect("Failed to start LarkAnything");
     app.run(|app, event| {
+        #[cfg(target_os = "macos")]
+        if matches!(&event, tauri::RunEvent::Reopen { .. }) {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
         if matches!(event, tauri::RunEvent::Exit) {
             let state = app.state::<NativeState>();
             for process in state.children.lock().unwrap().values() {
@@ -712,6 +750,19 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn platform_window_chrome_uses_the_compiled_configuration() {
+        let context: tauri::Context<tauri::Wry> = tauri::generate_context!();
+        let window = context.config().app.windows.iter().find(|w| w.label == "main").unwrap();
+        assert_eq!(window.decorations, cfg!(target_os = "macos"));
+        assert_eq!(window.title, "LarkAnything");
+        #[cfg(target_os = "macos")]
+        {
+            assert_eq!(window.title_bar_style, tauri::TitleBarStyle::Visible);
+            assert!(!window.hidden_title);
+        }
+    }
 
     #[test]
     fn packaged_cli_is_default_without_overriding_or_bypassing_saved_choice() {

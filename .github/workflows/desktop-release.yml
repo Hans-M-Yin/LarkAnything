@@ -56,6 +56,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Verify compiled native window configuration
+        run: cargo test --manifest-path src-tauri/Cargo.toml --release --target ${{ matrix.target }} --locked
       - name: Verify Windows executable icon
         if: runner.os == 'Windows'
         shell: pwsh

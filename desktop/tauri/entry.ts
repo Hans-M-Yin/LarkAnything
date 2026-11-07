@@ -16,10 +16,13 @@ worker.onmessage = async ({ data }) => {
 };
 worker.onerror = () => { for (const task of requests.values()) task.reject(new Error('后台处理失败，请重新打开 App。')); requests.clear(); };
 async function start() {
-  await request('initialize', await invoke('bootstrap'));
+  const context = await invoke('bootstrap');
+  await request('initialize', context);
   const methods = ['settings','saveSettings','list','preview','publish','checkConnection','beginConnection','finishConnection','setupStatus','useBundledCli','startAppSetup','appSetupProgress','cancelAppSetup','openAppSetup','openAuthorization'];
   (window as any).larkAnything = Object.fromEntries(methods.map(method => [method, (...args: any[]) => request(method, ...args)]));
   Object.assign((window as any).larkAnything, {
+    platform: context.platform,
+    setTheme: (theme: string) => invoke('window_theme', { theme }),
     windowAction: (action: string) => invoke('window_action', { action }),
     setExpanded: (expanded: boolean) => invoke('window_mode', { expanded }),
     chooseDirectory: () => invoke('choose', { directory: true }),
