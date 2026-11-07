@@ -2,18 +2,24 @@
 
 ## 下载与安装
 
-- **Windows**：下载 `LarkAnything_0.1.0_x64-setup.exe`，双击安装。
-- **Apple Silicon Mac**：下载 `LarkAnything_0.1.0_aarch64.dmg`，打开后拖入 Applications。
+- **Windows**：下载 `LarkAnything_0.1.1_x64-setup.exe`，双击安装。
+- **Apple Silicon Mac**：下载 `LarkAnything_0.1.1_aarch64.dmg`，打开后拖入 Applications。
 - 无需 Git、Node.js、Rust 或 Xcode；安装包已包含官方飞书 CLI 1.0.98。首次打开按 App 引导配置自己的飞书应用和账号授权。
 - 详细步骤见附件 `INSTALL.md`，完整性校验见 `SHA256SUMS.txt`。
 
 ## 本版内容
 
-- Tauri 跨平台桌面架构、统一转换 Core 和可配置的飞书目标位置。
-- Codex、Claude Code、Obsidian、OpenCode、Notion、Markdown 和 Word（DOCX）来源。
-- 循环来源切换动画、离线字体、蓝青玻璃图标和配套界面。
-- 修复 Windows EXE 内嵌图标未随界面更新的问题。
-- 继续保留上传回读核验与未知结果禁止自动重传的机制。
+- Notion 令牌安全持久化：Windows 凭据管理器 / macOS 钥匙串；重启自动读取，支持更新和删除。
+- 保留飞书连接配置及登录凭据，新增配置恢复回归验证。
+- 修复 Word 本地化标题、表格段落分隔与 XML 校验，明确超链接丢失提示。
+- 适配 OpenCode V1 / V2 的版本标识与会话格式，修复时间戳处理。
+- 修复 Notion 分页异常处理，细分令牌失效与页面权限错误。
+- 刷新已选择文件时更新摘要与修改时间，并标注不可读取的文件。
+- 增加自动评测、问题台账及 Windows 原生界面和真实飞书上传验证记录。
+
+## 升级
+
+退出旧版后安装新版。保留原有 App 数据目录即可继续使用飞书配置与上传回执。旧版 Notion 令牌只在内存中，升级后需重新连接一次，之后重启无需再次输入。
 
 ## 预览版限制
 
