@@ -661,6 +661,10 @@ fn window_action(window: tauri::WebviewWindow, action: String) -> Result<()> {
     };
     result.map_err(|e| failure(e, "EWINDOW"))
 }
+// Expand once: macOS embeds Info.plist symbols at this macro call site.
+fn app_context() -> tauri::Context<tauri::Wry> {
+    tauri::generate_context!()
+}
 fn main() {
     let home = dirs::home_dir().expect("Home directory unavailable");
     let mut root = home.join(".larkanything");
@@ -727,7 +731,7 @@ fn main() {
             window_action,
             window_theme
         ])
-        .build(tauri::generate_context!())
+        .build(app_context())
         .expect("Failed to start LarkAnything");
     app.run(|app, event| {
         #[cfg(target_os = "macos")]
@@ -753,7 +757,7 @@ mod tests {
 
     #[test]
     fn platform_window_chrome_uses_the_compiled_configuration() {
-        let context: tauri::Context<tauri::Wry> = tauri::generate_context!();
+        let context = app_context();
         let window = context.config().app.windows.iter().find(|w| w.label == "main").unwrap();
         assert_eq!(window.decorations, cfg!(target_os = "macos"));
         assert_eq!(window.title, "LarkAnything");
