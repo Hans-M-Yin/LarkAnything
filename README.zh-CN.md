@@ -8,12 +8,12 @@ LarkAnything 是适用于 Windows 和 macOS 的轻量桌面 App。选择来源�
 
 ## 下载与安装
 
-当前桌面版本：**0.1.0 Preview 1** · [发布说明与校验文件](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.0-preview.1)
+当前桌面版本：**0.1.1 Preview 1** · [发布说明与校验文件](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.1-preview.1)
 
 | 平台 | 下载 | 安装方式 |
 | --- | --- | --- |
-| Windows x64 | [EXE 安装程序 · 约 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_x64-setup.exe) | 双击，按向导安装 |
-| Apple Silicon Mac · macOS 13+ | [DMG · 约 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_aarch64.dmg) | 打开 DMG，将 App 拖入 Applications |
+| Windows x64 | [EXE 安装程序 · 约 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.1-preview.1/LarkAnything_0.1.1_x64-setup.exe) | 双击，按向导安装 |
+| Apple Silicon Mac · macOS 13+ | [DMG · 约 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.1-preview.1/LarkAnything_0.1.1_aarch64.dmg) | 打开 DMG，将 App 拖入 Applications |
 
 **不需要 Git、Node.js、Rust、Xcode，也不用执行终端命令。** 两个平台的安装包均内置官方飞书 CLI 1.0.98。Windows 若缺少 WebView2，安装器会联网安装微软共享运行库。本版暂不提供 Intel Mac 和 Windows ARM 原生安装包。
 
@@ -53,11 +53,11 @@ App 会列出可选内容，由你确认要上传哪一项，不会根据其他 
 
 ## 可选：CLI、Skill 与 SDK
 
-需要由 Agent 发起导出、编写自动化或接入自定义来源时，参阅 [CLI、Skill 与 SDK 指南](docs/CLI-AND-SDK.zh-CN.md)、[Agent 安装说明](INSTALL.md)及 [TypeScript 接口](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/src/index.d.ts)。这些是可选用法，具有独立的开发与运行环境要求。
+需要由 Agent 发起导出、编写自动化或接入自定义来源时，参阅 [CLI、Skill 与 SDK 指南](docs/CLI-AND-SDK.zh-CN.md)、[Agent 安装说明](INSTALL.md)及 [TypeScript 接口](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.1-preview.1/src/index.d.ts)。这些是可选用法，具有独立的开发与运行环境要求。
 
 ## 从源码开发
 
-标准桌面版采用 Tauri、Rust 和 React，统一在 `main` 维护。已发布预览版仍对应标签 `desktop-v0.1.0-preview.1`。
+标准桌面版采用 Tauri、Rust 和 React，统一在 `main` 维护。已发布预览版仍对应标签 `desktop-v0.1.1-preview.1`。
 
 开发与打包请参考 [Windows 与 Mac 构建说明](docs/BUILD.md)：
 

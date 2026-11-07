@@ -8,12 +8,12 @@ LarkAnything is a lightweight desktop app for Windows and macOS. Choose a source
 
 ## Download and install
 
-Current desktop release: **0.1.0 Preview 1** · [Release notes and checksums](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.0-preview.1)
+Current desktop release: **0.1.1 Preview 1** · [Release notes and checksums](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.1-preview.1)
 
 | Platform | Download | Installation |
 | --- | --- | --- |
-| Windows x64 | [EXE installer · about 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_x64-setup.exe) | Run the installer |
-| Apple Silicon Mac · macOS 13+ | [DMG · about 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_aarch64.dmg) | Open the DMG and drag LarkAnything into Applications |
+| Windows x64 | [EXE installer · about 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.1-preview.1/LarkAnything_0.1.1_x64-setup.exe) | Run the installer |
+| Apple Silicon Mac · macOS 13+ | [DMG · about 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.1-preview.1/LarkAnything_0.1.1_aarch64.dmg) | Open the DMG and drag LarkAnything into Applications |
 
 **No Git, Node.js, Rust, Xcode or terminal commands needed.** Both installers include the official Feishu CLI 1.0.98. Windows installs Microsoft's shared WebView2 runtime if it is missing; that step needs internet access. Intel Mac and native Windows ARM installers are not included in this release.
 
@@ -53,11 +53,11 @@ Conversation sources support incremental publishing when their history and ident
 
 ## Optional CLI, Skills and SDK
 
-For agent-driven exports, automation and custom integrations, see the [CLI, Skills and SDK guide](docs/CLI-AND-SDK.md), [agent installation instructions](INSTALL.md), and [TypeScript interfaces](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/src/index.d.ts). These are optional paths with separate development/runtime requirements.
+For agent-driven exports, automation and custom integrations, see the [CLI, Skills and SDK guide](docs/CLI-AND-SDK.md), [agent installation instructions](INSTALL.md), and [TypeScript interfaces](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.1-preview.1/src/index.d.ts). These are optional paths with separate development/runtime requirements.
 
 ## Build from source
 
-The standard desktop app uses Tauri, Rust and React and is maintained on `main`. The published preview remains pinned by tag `desktop-v0.1.0-preview.1`.
+The standard desktop app uses Tauri, Rust and React and is maintained on `main`. The published preview remains pinned by tag `desktop-v0.1.1-preview.1`.
 
 Follow the [Windows and Mac build instructions](docs/BUILD.md):
 
