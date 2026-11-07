@@ -1,240 +1,77 @@
+<img src="https://raw.githubusercontent.com/Hans-M-Yin/LarkAnything/desktop-v0.1.0-preview.1/desktop/assets/larkanything.png" width="80" alt="LarkAnything icon">
+
 # LarkAnything
 
 **English** | [简体中文](README.zh-CN.md)
 
-**AI conversations → readable, editable Feishu/Lark documents.**
+**Bring your AI conversations and documents into Feishu / Lark.**
 
-Export conversations from different AI clients through a shared formatting protocol. The long-term goal is to connect more sources with more Feishu/Lark collaboration tools; v0.1 focuses on faithfully exporting the original conversation text.
+LarkAnything is a lightweight desktop app for Windows and macOS. Choose a source, select a conversation or file, preview it, and publish an editable Feishu document. Set the destination folder in Settings. No model API key is required, and LarkAnything does not use AI to rewrite your content.
 
-LarkAnything provides a local CLI, an embeddable JavaScript SDK, and a Codex plugin/Skill package. No model API key is required, and no model is called to rewrite your conversation.
+## Download and install
 
-## Current capabilities
+Current desktop release: **0.1.0 Preview 1** · [Release notes and checksums](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.0-preview.1)
 
-| Input | Supported scope |
+| Platform | Download | Installation |
+| --- | --- | --- |
+| Windows x64 | [EXE installer · about 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_x64-setup.exe) | Run the installer |
+| Apple Silicon Mac · macOS 13+ | [DMG · about 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_aarch64.dmg) | Open the DMG and drag LarkAnything into Applications |
+
+**No Git, Node.js, Rust, Xcode or terminal commands needed.** Both installers include the official Feishu CLI 1.0.98. Windows installs Microsoft's shared WebView2 runtime if it is missing; that step needs internet access. Intel Mac and native Windows ARM installers are not included in this release.
+
+This is a **preview release**. Windows has no publisher certificate; macOS uses an ad-hoc signature without Apple Developer ID notarization. Your OS may show an unidentified-developer prompt. See the [installation guide](docs/DESKTOP-INSTALL.md) for details. Mac packaging and automated checks passed; real-device installation, authorization and UI testing are still needed.
+
+## First use
+
+1. Open the App and follow the connection guide to create a Feishu application or use your own App ID and App Secret. Your organization may require administrator permission.
+2. Complete account authorization in your browser and return to the App to confirm. No credential-repair utility is needed.
+3. Choose a source and select a conversation, page or file. Set your destination folder in Settings if needed.
+4. Review the preview, then upload. The App verifies the result by reading the document back.
+
+The App lists available content for you to select; it does not infer the active document from another app's window. Authorization and upload require internet access. Installers contain no developer account credentials or user documents.
+
+## Supported desktop sources
+
+| Source | How content is selected |
 | --- | --- |
-| Codex CLI / Desktop | Local rollout JSONL; removes mirrored events while preserving actual repeated exchanges |
-| Claude Code | Local JSONL; follows the `parentUuid` chain from the last main-session message |
-| ChatGPT | Previously exported conversation JSON; selects the branch identified by `current_node` |
-| Custom clients | Implement an Adapter or supply ConversationV1 JSON |
+| Codex | Select a conversation from local session logs |
+| Claude Code | Select a local conversation |
+| Obsidian | Configure a vault and select a Markdown note |
+| OpenCode | List and export sessions through its locally installed native CLI |
+| Notion | Connect your integration, grant page access, then select a page |
+| Markdown | Choose an `.md` file with the file picker |
+| Microsoft Word | Choose a `.docx` file; Word itself is not required |
 
-| Output | Status |
-| --- | --- |
-| Local Markdown, HTML preview, and publish plan | Implemented; fully offline |
-| Native editable Feishu/Lark documents | Uses the official Lark CLI's Markdown import |
-| Continue by conversation id, create documents or append to a selected document | Default: reuse the document and append only new messages; folder/Wiki parents supported |
-| Per-channel formatting, naming, and per-call options | Implemented with layered overrides |
-| Reply grouping, timestamps, and model metadata | Groups messages from the same reply; shows time range and model once at the top, with public progress in quotes |
-| Duplicate detection, concurrency locks, and failure readback | Implemented with local state |
-| Images | Links are preserved; embedded data and unavailable attachments are flagged. No image uploads in v0.1 |
-| Formulas | `$…$`, `$$…$$`, `\(…\)` and `\[…\]` become native Feishu formulas; local previews render offline |
-| Mermaid | Source is preserved with a warning; native rendering is not guaranteed |
+All sources use the same Core conversion, preview and publishing pipeline. Notion tokens remain in memory for the current run; reconnect after restarting. File imports are limited to 20 MB per file. DOCX supports text, headings, lists and tables; images and complex layouts are not preserved. ChatGPT export JSON is also supported through the optional CLI/SDK.
 
-This release is a **locally executed plugin/CLI**. It does not add a button to the native Codex interface: an instruction to your agent or a CLI command starts the export. Open the generated Feishu/Lark document to assess its final appearance; the HTML file is a local reading preview.
+## Settings, updates and data
 
-## Easy installation for Codex / Claude Code
+- Configure the Feishu destination, source locations, appearance and connection in the App. Advanced CLI/SDK formatting options are documented separately.
+- Quit the App before updating. Run the new Windows installer, or replace the Mac application in Applications.
+- Uninstall through Windows Settings, or move the Mac app to the Trash. Settings and publishing receipts in `~/.larkanything` are retained; uninstalling does not revoke Feishu authorization.
+- Local previews may contain private content. Original source documents are not modified. Preserve publishing receipts: an unknown write result is deliberately not retried automatically, to avoid duplicate documents.
 
-Give Codex or Claude Code this repository's GitHub URL and say:
+Conversation sources support incremental publishing when their history and identity permit it; Notion pages and imported files create document snapshots. Image upload, two-way sync and background monitoring are not implemented. Conversion limits and Feishu permissions can affect the result; readback verifies text, not pixel-perfect layout.
 
-> Install LarkAnything from https://github.com/Hans-M-Yin/LarkAnything, read INSTALL.md, and help me connect it to Feishu/Lark.
+## Optional CLI, Skills and SDK
 
-The agent follows [INSTALL.md](INSTALL.md) (currently in Chinese) to install the runtime, dependencies, and a personal Skill for your client. To install manually:
+For agent-driven exports, automation and custom integrations, see the [CLI, Skills and SDK guide](docs/CLI-AND-SDK.md), [agent installation instructions](INSTALL.md), and [TypeScript interfaces](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/src/index.d.ts). These are optional paths with separate development/runtime requirements.
+
+## Build from source
+
+Desktop development uses Tauri, Rust and React. The current desktop source is on [`codex/tauri-desktop`](https://github.com/Hans-M-Yin/LarkAnything/tree/codex/tauri-desktop); the release is pinned by tag `desktop-v0.1.0-preview.1`. The default branch has not yet incorporated the desktop implementation.
+
+Clone the desktop branch before following the [Windows and Mac build instructions](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/TAURI-MIGRATION.md):
 
 ```bash
-git clone https://github.com/Hans-M-Yin/LarkAnything.git
+git clone --branch codex/tauri-desktop https://github.com/Hans-M-Yin/LarkAnything.git
 cd LarkAnything
-node scripts/install.mjs
-```
-
-If you are already in the source directory, only run `node scripts/install.mjs`.
-
-Both Codex and Claude Code are installed by default. Use `--agent codex` or `--agent claude` to select one. The installer prepares dependencies, reuses an existing official Lark CLI or installs a private copy, and creates a default configuration. No plugin marketplace registration, cache-directory hunting, or manual JSON editing is required. Node.js 22+ and npm are required; your agent can help prepare them if missing.
-
-After installation, let the agent guide you through the setup and authorization required by Feishu/Lark. Start a new chat and say:
-
-> Export this conversation to Feishu.
-
-The runtime and configuration live in `.larkanything` under your home directory. You can delete the downloaded source afterward. To update, download the new source and rerun the same installation command; configuration and publish receipts are preserved. Authorization remains subject to your tenant and organization permissions.
-
-## Local development / offline demo
-
-With Node.js 22+, run these commands in the project directory:
-
-```bash
-npm ci --ignore-scripts
-npm run demo
-```
-
-Open `.larkanything/demo/preview.html` to view a synthetic example. The demo contains no real conversations and does not connect to Feishu/Lark.
-
-Preview your own conversation locally:
-
-```bash
-node bin/larkanything.mjs list --channel codex
-node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID
-node bin/larkanything.mjs preview --channel claude-code --input /path/to/session.jsonl
-node bin/larkanything.mjs preview --channel chatgpt --input /path/to/conversations.json --session YOUR_CONVERSATION_ID
-```
-
-`list` never uploads content. Codex results group files by their recorded `session_meta.id` and include the session id, segment count and source paths. `--session` automatically assembles matching local segments, including archived and suffixed logs. `--input` deliberately loads only that file and reports full conversation completeness as unknown.
-
-`preview` writes Markdown, HTML and a frozen `plan.json`; these may contain private conversation text. The plan's `source.manifest` records source paths, byte counts, SHA-256 fingerprints, message counts, excluded injected records and deduplication counts. `complete` covers discoverable local segments at preparation time, not deleted, remote or parent-fork history. Conflicting versions of one message identity stop the export. Ambiguous repeats or revisions are retained with diagnostics; text prefixes never justify deletion. Tool logs are excluded by default; use `--include-tools` to include them.
-
-### Reading format and metadata
-
-By default, consecutive assistant messages from the same reply share one heading while preserving the original text of each step. The reply's recorded time range and model appear once at the top. Public progress and implementation updates appear in block quotes with a simple step marker; the final response appears as normal body text. Only messages explicitly identified as progress by the log are quoted. Unknown phases remain body text, without guessing which message is the final response. Codex uses `turn_id` to identify reply boundaries; sources without turn identifiers use consecutive assistant messages. A user message always ends a group. When included, tool steps remain in their original order inside quotes.
-
-Adapters still retain timestamps and models for each message. If the log records a model change within one reply, the models appear in order at the top. **Timestamps come from client logs and may differ from when the user clicked Send or the server began generating.** Codex model metadata comes from the turn configuration and is labeled accordingly. Claude Code uses the message's `model`; ChatGPT uses `metadata.model_slug`. Missing information is marked as unrecorded. The current model is never used to fill historical gaps, and internal reasoning is not exported.
-
-New installations use your local time zone. SDK calls and calls without a configuration default to UTC; upgrades preserve existing configuration. Override the time zone for a single export:
-
-```bash
-node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --time-zone Asia/Shanghai
-```
-
-Use `--no-merge` for individual message headings, `--no-timestamps` to hide timestamps, and `--no-models` to hide models. Configuration options are `format.mergeConsecutiveAssistant`, `includeTimestamps`, `includeModels`, and `timeZone`. Grouping only changes presentation: `publishedMessages` counts original messages, while `displayGroups` counts displayed groups.
-
-Math is extracted before Markdown formatting and published as the official CLI's native `<latex>…</latex>` elements, preserving subscripts, backslashes, matrix line breaks and Chinese `\text{…}`. Code examples, escaped delimiters and common prices stay literal. Readback checks formula source and structure. Frozen plans explicitly marked `MATH_NOT_VERIFIED` retain their original text-only verification on retry, recorded as `legacy-math-as-text`. Local previews use offline KaTeX MathML with a source fallback; Feishu's supported LaTeX commands and visual appearance still require live validation.
-
-## Connect to Feishu/Lark
-
-The backend uses the official [Lark CLI](https://github.com/larksuite/cli) for authorization and document operations. Follow its quick start to install and authorize it, for example:
-
-```bash
-npx @larksuite/cli@latest install
-lark-cli config init
-lark-cli auth login --domain docs,drive
-```
-
-The following commands must be available. LarkAnything itself does not read, store, or ask you to paste OAuth tokens:
-
-```bash
-lark-cli docs +create --help
-lark-cli docs +update --help
-lark-cli docs +fetch --help
-```
-
-Confirm that `+create` and `+update` support `--doc-format markdown` and `--content -`, then publish:
-
-```bash
-node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID
-```
-
-This command owns source assembly, snapshotting, conversion, preview, upload and readback. The agent does not need to inspect logs or write processing scripts. Verification checks the full text sequence, explicitly reports link-boundary whitespace compatibility, and strictly preserves code whitespace, indentation and inline-code structure. It does not verify fonts, table widths or image appearance.
-
-The default `--operation sync` creates a document on the first publish and records the conversation id, document id and published message ids/hashes locally. Running it again after more conversation appends only new messages to that document; unchanged exports perform no remote write. Message numbering continues without repeating the transcript heading or session metadata. The opening counts and time range remain the initial snapshot. Matching is scoped by channel, backend identity, namespace and parent destination, and requires the same state directory and a stable conversation id. If an existing config explicitly sets `create`, change it to `sync` or pass `--operation sync`. Legacy receipts lack conversation bindings and cannot automatically resume older documents.
-
-To publish a reviewed preview or retry failed readback, use the returned `output.plan` / `retry.plan`:
-
-```bash
-node bin/larkanything.mjs publish --plan /absolute/path/to/plan.json
-```
-
-The saved plan freezes the body, destination and export key without rereading a growing conversation. A known remote receipt retries verification only. Error JSON includes the document URL/id, difference diagnostics and retry plan. Uncertain writes remain blocked from automatic replay. Agents must report the program's result rather than override failures by deleting whitespace or writing their own verification files.
-
-Choose a destination and formatting profile:
-
-```bash
-node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --parent-token FOLDER_OR_WIKI_NODE_TOKEN
-node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID --operation create
-node bin/larkanything.mjs publish --channel claude-code --input /path/session.jsonl --operation append --document DOCUMENT_URL_OR_ID
-node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --config examples/larkanything.config.json --profile engineering
-```
-
-The user must complete the initial Feishu/Lark authorization. Available destinations, features, and access depend on the account, tenant, and authorized scopes. Regional domains and authentication for Lark and Feishu are handled by the official CLI configuration.
-
-## Optional: install as a Codex plugin
-
-For most users, use the easy installer above. Marketplace distribution is an alternative to personal Skill installation; you only need one.
-
-The repository includes a portable `plugin.json`, a Codex-compatible manifest, and `.agents/plugins/marketplace.json`.
-
-For local development, register the marketplace from the project root:
-
-```bash
-codex plugin marketplace add .
-```
-
-Select the LarkAnything marketplace in the Codex plugin interface and install it. Run `npm ci --ignore-scripts` once in the installed plugin directory and complete Lark CLI authorization. Then start a new chat and say:
-
-> Use $larkanything-export to save this Codex conversation to Feishu, excluding tool logs.
-
-The Skill uses the selected conversation's actual logs, not the current context summary as a substitute for the full transcript. It requires local execution. There is no remote MCP service or browser extension in this release. The marketplace can also be added using this repository's GitHub URL. Submission to a public plugin store is a separate process; this project is not listed there.
-
-## Configuration and protocols
-
-See the [complete example](examples/larkanything.config.json). Configuration precedence is:
-
-`built-in defaults → defaults → channels[channel] → profiles[name] → per-call CLI/SDK overrides`
-
-- `protocol` controls content selection and document structure; v0.1 provides `transcript`.
-- `format` supplies protocol options such as role labels, language, timestamps, tool logs, and conversion strictness.
-- `renderer` selects the transport format; v0.1 provides `markdown`.
-- `target` selects the backend, operation, destination, and application namespace.
-- `backends` holds backend-specific runtime options. Do not put credentials in the configuration.
-
-For example, dedicate a Feishu folder to research notes:
-
-```json
-{
-  "version": 1,
-  "profiles": {
-    "research": {
-      "format": { "locale": "zh-CN", "includeTools": false },
-      "target": { "parentToken": "YOUR_FOLDER_TOKEN", "namespace": "research" }
-    }
-  }
-}
-```
-
-`stateDir` is resolved relative to the configuration file. Without a configuration file, receipts are stored in `.larkanything/state` under the current working directory. Separate accounts or workflows should use separate namespaces and state directories.
-
-## Extension interfaces
-
-```javascript
-import { createLarkAnything } from './src/index.mjs';
-
-const engine = createLarkAnything({
-  adapters: [myClientAdapter],
-  protocols: [myFormatProtocol],
-  renderers: [myRenderer],
-  backends: [myLarkBackend],
-});
-
-const plan = await engine.plan({
-  channel: myClientAdapter.id,
-  input: '/path/to/export',
-  overrides: { protocol: myFormatProtocol.id, target: { backend: myLarkBackend.id } },
-});
-await engine.publish(plan);
-```
-
-The five replaceable interfaces are `Adapter`, `FormatProtocol`, `Renderer`, `Backend`, and `ReceiptStore`. See the [TypeScript interfaces](src/index.d.ts) and [architecture guide](docs/ARCHITECTURE.md) (currently in Chinese). The core does not depend on client-specific log formats. New source types can register their own protocol without pretending to be chat messages.
-
-## Reliability and limitations
-
-- Receipts distinguish `publishing`, `written`, `verified`, `verification_failed`, and `uncertain` states.
-- Republishing a verified frozen plan returns its existing receipt. A named key identifies one snapshot and conflicts with a different plan; routine incremental publishing needs no explicit key.
-- An unknown write result is not automatically retried. If a document id is known but readback failed, use `publish --plan` with the same frozen plan to retry readback only.
-- Idempotency is limited to **the same state directory**. Multiple machines/users need a shared ReceiptStore. v0.1 has no distributed transactions or automatic exactly-once guarantee.
-- Default `sync` uses the conversation binding and message checkpoint to append only new messages. Edited, truncated or switched-branch history stops with `SYNC_HISTORY_CHANGED`. Finish pending publishes using their original frozen plan. `SYNC_STALE_PLAN` requires preparing a fresh plan before publishing.
-- Explicit `create` creates an independent document; explicit `append --document ...` appends the entire selected export and can repeat existing text. Neither operation creates an automatic conversation binding.
-- No overwriting existing documents, two-way sync, summaries, automatic sharing, notifications, or background monitoring.
-- Codex fork parents are not merged automatically. Claude Code and ChatGPT export the selected branch. Missing content, conversion limitations, and excluded tool logs are reported.
-- v0.1 reads locally available logs or user-supplied export files. It does not connect to or scrape AI client accounts. Log formats are not stable public contracts and require ongoing compatibility work with real examples.
-- Local previews/plans contain exported text. Receipts store status, error codes and message ids/hashes; failed readback may include short difference excerpts, but not the full document body. Original client logs remain unchanged.
-
-`--strict` stops publication when a recognized source or rendering limitation is encountered. Passing local tests and a mock backend does not establish that publication and visual checks have succeeded in your own tenant.
-
-## Development and roadmap
-
-```bash
+npm ci
 npm run check
+npm run desktop:check
 npm test
-npm run demo
 ```
 
-Tests cover branch selection, duplicate events, formatting overrides, code fences, XML escaping, long text, concurrency, unknown write results, and simulated publishing across real subprocess boundaries.
+Native packaging additionally requires Rust and platform build tools. [The release workflow](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/.github/workflows/desktop-release.yml) builds Windows x64 and Apple Silicon installers, bundles the official CLI, and produces SHA-256 checksums. Historical Electron and SwiftUI code remains for reference; the desktop build entry points use Tauri.
 
-Planned directions: media and formula fidelity → more clients and browser entry points → conflict handling for remote manual edits → GitHub/web/local-file sources → additional outputs such as Bitable. Each has an extension point; unimplemented features are not advertised in runtime capabilities.
-
-MIT License. An independent community project, not affiliated with OpenAI, Anthropic, Feishu, or Lark.
+MIT License. An independent community project, not affiliated with OpenAI, Anthropic, Feishu or Lark. Bundled components and fonts retain their respective licenses.

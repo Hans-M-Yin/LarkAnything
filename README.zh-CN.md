@@ -1,240 +1,77 @@
+<img src="https://raw.githubusercontent.com/Hans-M-Yin/LarkAnything/desktop-v0.1.0-preview.1/desktop/assets/larkanything.png" width="80" alt="LarkAnything icon">
+
 # LarkAnything
 
 [English](README.md) | **简体中文**
 
-**将 AI 对话导出为清晰易读、可编辑的飞书 / Lark 文档。**
+**将 AI 对话与文档整理成可编辑的飞书 / Lark 文档。**
 
-把不同 AI 客户端中的对话，按统一的格式协议发布到飞书。目标是逐步连接更多来源与飞书协作对象；v0.1 先专注于对话原文导出。
+LarkAnything 是适用于 Windows 和 macOS 的轻量桌面 App。选择来源，挑选会话或文件，预览后上传到飞书；保存文件夹可以在设置中指定。无需模型 API Key，也不会调用 AI 改写原文。
 
-当前提供本地 CLI、可嵌入的 JavaScript SDK，以及 Codex 插件/Skill 包。无需模型 API Key，也不会调用模型改写原文。
+## 下载与安装
 
-## 当前能力
+当前桌面版本：**0.1.0 Preview 1** · [发布说明与校验文件](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.0-preview.1)
 
-| 输入 | 支持范围 |
+| 平台 | 下载 | 安装方式 |
+| --- | --- | --- |
+| Windows x64 | [EXE 安装程序 · 约 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_x64-setup.exe) | 双击，按向导安装 |
+| Apple Silicon Mac · macOS 13+ | [DMG · 约 21 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.0-preview.1/LarkAnything_0.1.0_aarch64.dmg) | 打开 DMG，将 App 拖入 Applications |
+
+**不需要 Git、Node.js、Rust、Xcode，也不用执行终端命令。** 两个平台的安装包均内置官方飞书 CLI 1.0.98。Windows 若缺少 WebView2，安装器会联网安装微软共享运行库。本版暂不提供 Intel Mac 和 Windows ARM 原生安装包。
+
+当前为**预览版**：Windows 尚未使用发布者证书签名；Mac 使用 ad-hoc 签名，尚未完成 Apple Developer ID 签名和公证。系统可能提示未知开发者，处理方式见[安装说明](docs/DESKTOP-INSTALL.md)。Mac 打包与自动检查已通过，真机安装、授权与界面仍待测试。
+
+## 第一次使用
+
+1. 打开 App，按连接引导创建飞书应用，或填写自己的 App ID 和 App Secret。组织权限可能需要管理员协助。
+2. 在浏览器完成本人账号授权，返回 App 确认。无需额外运行凭证修复工具。
+3. 选择来源，再挑选会话、页面或文件；需要时在设置中指定飞书目标文件夹。
+4. 检查预览后上传，App 会回读文档核验结果。
+
+App 会列出可选内容，由你确认要上传哪一项，不会根据其他 App 的窗口猜测当前文档。授权和上传需要联网；安装包不包含开发者账号凭据或用户文档。
+
+## 支持的桌面来源
+
+| 来源 | 选择方式 |
 | --- | --- |
-| Codex CLI / Desktop | 本地 rollout JSONL；过滤镜像事件，保留实际重复问答 |
-| Claude Code | 本地 JSONL；按最后一个主会话消息的 parentUuid 选取分支 |
-| ChatGPT | 已导出的 conversation JSON；按 current_node 选择分支 |
-| 自定义客户端 | 实现 Adapter，或提供 ConversationV1 JSON |
+| Codex | 从本机会话日志中选择对话 |
+| Claude Code | 选择本地会话 |
+| Obsidian | 设置 Vault 后选择 Markdown 笔记 |
+| OpenCode | 通过本机已安装的原生 CLI 列出并导出会话 |
+| Notion | 配置集成并授予页面访问权限后选择页面 |
+| Markdown | 使用文件选择器选择 `.md` 文件 |
+| Microsoft Word | 使用文件选择器选择 `.docx` 文件，无需安装 Word |
 
-| 输出 | 状态 |
-| --- | --- |
-| 本地 Markdown、HTML 预览、发布计划 | 已实现；完全离线 |
-| 飞书原生可编辑文档 | 已接入官方 lark-cli 的 Markdown 导入 |
-| 按会话 ID 续写、新建文档、向指定文档追加 | 默认复用原文档，仅追加新增消息；支持文件夹/Wiki 父节点 |
-| 渠道格式偏好、命名配置、单次参数 | 已实现；支持逐层覆盖 |
-| 回复合并、时间与模型记录 | 同轮回复合并；开头集中显示时间范围和模型，公开过程引用展示 |
-| 重复发布识别、并发锁、失败回读 | 已实现；状态保存在本机 |
-| 图片 | 保留链接；嵌入数据/不可用附件明确标记，首版不上传 |
-| 公式 | 识别 `$…$`、`$$…$$`、`\(…\)`、`\[…\]`，转换为飞书原生公式；本地预览离线渲染 |
-| Mermaid | 保留源码并提示；不承诺原生渲染 |
+所有来源统一进入 Core 的转换、预览和上传流程。Notion 令牌仅保存在本次运行内存中，重启后需重新连接；文件导入上限为每个文件 20 MB。DOCX 支持正文、标题、列表和表格，不保留图片与复杂版式。另可通过 CLI/SDK 处理 ChatGPT 导出的 JSON。
 
-首版是**本地执行的插件/CLI**。它不会往 Codex 原生界面添加按钮；一条导出指令或一条 CLI 命令启动整条流程。飞书最终视觉效果需要打开生成文档确认，HTML 仅作为本地阅读预览。
+## 设置、更新与数据
 
-## 懒人安装（Codex / Claude Code）
+- 飞书保存位置、来源路径、外观和连接可以在界面中设置；CLI/SDK 的高级格式选项另有文档。
+- 更新前退出 App：Windows 运行新版安装程序，Mac 用新版替换 Applications 中的应用。
+- Windows 通过系统“设置 → 应用”卸载，Mac 将 App 移到废纸篓。卸载保留 `~/.larkanything` 中的配置和上传回执，也不会撤销飞书授权。
+- 本地预览可能含私人内容，原始来源文档不会被修改。请保留上传回执：写入结果未知时，程序会暂停自动重传，避免重复文档。
 
-把本仓库的 GitHub 链接交给 Codex 或 Claude Code，说：
+会话来源在历史和身份可确认时支持增量发布；Notion 页面与导入文件以快照方式新建文档。暂不支持图片上传、双向同步和后台监控。转换限制及飞书权限可能影响结果；回读核验文字内容，不保证视觉排版完全一致。
 
-> 帮我安装 https://github.com/Hans-M-Yin/LarkAnything 里的 LarkAnything，阅读 INSTALL.md，并引导我连接飞书。
+## 可选：CLI、Skill 与 SDK
 
-Agent 会按 [INSTALL.md](INSTALL.md) 安装程序、依赖和当前客户端的个人 Skill。也可以手动安装：
+需要由 Agent 发起导出、编写自动化或接入自定义来源时，参阅 [CLI、Skill 与 SDK 指南](docs/CLI-AND-SDK.zh-CN.md)、[Agent 安装说明](INSTALL.md)及 [TypeScript 接口](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/src/index.d.ts)。这些是可选用法，具有独立的开发与运行环境要求。
+
+## 从源码开发
+
+桌面版采用 Tauri、Rust 和 React。当前桌面源码位于 [`codex/tauri-desktop` 分支](https://github.com/Hans-M-Yin/LarkAnything/tree/codex/tauri-desktop)，此次发布对应标签 `desktop-v0.1.0-preview.1`；默认分支尚未合并桌面实现。
+
+先克隆桌面分支，再参考 [Windows 与 Mac 构建说明](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/TAURI-MIGRATION.md)：
 
 ```bash
-git clone https://github.com/Hans-M-Yin/LarkAnything.git
+git clone --branch codex/tauri-desktop https://github.com/Hans-M-Yin/LarkAnything.git
 cd LarkAnything
-node scripts/install.mjs
-```
-
-已在源码目录中时，只需运行 `node scripts/install.mjs`。
-
-默认同时支持 Codex 和 Claude Code；也可加 `--agent codex` 或 `--agent claude`。安装器自动准备依赖、复用或私有安装官方 Lark CLI，并生成默认配置。无需注册插件市场、寻找缓存目录或手动编辑 JSON。需要 Node.js 22+ 和 npm；缺少时可让 Agent 帮忙准备。
-
-安装后让 Agent 按引导连接飞书，完成飞书要求的配置/授权。新开对话后，直接说：
-
-> 把这个对话导出到飞书。
-
-程序与配置保存在用户目录的 `.larkanything` 中，删除下载的源码目录后仍可使用。更新时下载新版源码，再运行同一安装命令；配置和发布回执会保留。授权是否可完成仍受飞书租户和组织权限限制。
-
-## 本地开发 / 离线体验
-
-需要 Node.js 22+。在项目目录执行：
-
-```bash
-npm ci --ignore-scripts
-npm run demo
-```
-
-打开 `.larkanything/demo/preview.html` 查看合成样例。样例不包含真实对话，不连接飞书。
-
-导出自己的会话到本地：
-
-```bash
-node bin/larkanything.mjs list --channel codex
-node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID
-node bin/larkanything.mjs preview --channel claude-code --input /path/to/session.jsonl
-node bin/larkanything.mjs preview --channel chatgpt --input /path/to/conversations.json --session YOUR_CONVERSATION_ID
-```
-
-`list` 不上传内容。Codex 会话按日志中的 `session_meta.id` 聚合，输出会话 ID、分段数和文件列表；`--session` 自动组装同一会话的本地分段，包括归档与带后缀的日志。`--input` 只处理指定文件，并将整个会话的完整性标记为未知。
-
-`preview` 生成 Markdown、HTML 和冻结的 `plan.json`，三者可能含私人对话，请自行选择保存位置。计划中的 `source.manifest` 记录各来源的路径、字节数、SHA-256、消息数量、排除的注入记录和去重数量。`complete` 仅表示准备时已发现的本机会话分段均被加载，不证明已删除、远端或 fork 父会话的历史可用。相同消息标识的内容冲突会停止导出；无法确认的重复或修订保留并警告，不按文本前缀删除。工具日志默认排除；`--include-tools` 可以开启。
-
-### 阅读与元信息
-
-默认将同一回复的连续助手消息合并到一个标题下，保留每一步的原文。回复开头统一显示记录时间范围和模型；公开的进度/实现过程放在引用块中，仅使用“（步骤 x）”标记，最终答复使用正文。只有日志明确标注的过程消息进入引用，未知阶段保留为正文，不推断某条消息是最终答复。Codex 使用 `turn_id` 判定边界；缺少轮次标识的来源按连续助手消息分组，用户消息始终打断合并。显示工具时，工具步骤按原始顺序保留在引用块内。
-
-Adapter 仍逐条保留时间与模型，文档中集中显示一次；若日志确实记录了同轮模型切换，会在回复开头按顺序列出。**时间是客户端日志记录时间，不承诺等于用户点击发送或服务端开始生成的时刻。** Codex 模型来自当时的轮次配置，标注“轮次配置”；Claude Code 使用消息的 `model`，ChatGPT 导出使用消息的 `metadata.model_slug`。缺失信息显示“未记录”，不会用当前模型补写历史，也不会导出内部推理。
-
-新安装默认采用本机时区；SDK/无配置调用默认 UTC，已有配置更新时保持原有设置。可以单次指定：
-
-```bash
-node bin/larkanything.mjs preview --channel codex --session YOUR_SESSION_ID --time-zone Asia/Shanghai
-```
-
-`--no-merge` 保留逐条消息标题，`--no-timestamps` 隐藏时间，`--no-models` 隐藏模型。对应配置为 `format.mergeConsecutiveAssistant`、`includeTimestamps`、`includeModels`、`timeZone`。合并仅改变展示分组，`publishedMessages` 仍统计原始消息数，`displayGroups` 统计展示分组数。
-
-公式在 Markdown 排版前提取，按官方 CLI 支持的 `<latex>…</latex>` 元素插入飞书，保留上下标、反斜杠、矩阵换行和中文 `\text{…}`，避免独立一行的 `=` 被当成标题。代码示例、转义的定界符及常见价格写法不转换。回读会检查公式源码和公式结构；旧计划中明确标有 `MATH_NOT_VERIFIED` 的发布重试仍采用原有文字校验，并在回执中标注 `legacy-math-as-text`。本地 HTML 使用 KaTeX 生成离线 MathML，预览无法解析时显示源码；飞书具体支持的 LaTeX 命令和视觉效果仍以实际文档为准。
-
-## 连接飞书
-
-后端复用官方 [Lark CLI](https://github.com/larksuite/cli) 的授权和资源写入能力。按其快速开始完成安装和授权，例如：
-
-```bash
-npx @larksuite/cli@latest install
-lark-cli config init
-lark-cli auth login --domain docs,drive
-```
-
-需要 CLI 支持以下命令；LarkAnything 本身不读取、保存或要求粘贴 OAuth token：
-
-```bash
-lark-cli docs +create --help
-lark-cli docs +update --help
-lark-cli docs +fetch --help
-```
-
-确认 `+create`、`+update` 支持 `--doc-format markdown`、`--content -`，然后发布：
-
-```bash
-node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID
-```
-
-该命令独立完成来源组装、快照、格式转换、本地预览、飞书写入与回读，不需要 Agent 阅读日志或编写处理脚本。程序核对完整文字序列，明确报告链接边界的空白兼容处理，并严格比较代码内容、缩进与行内代码。回读不验证字体、表格宽度或图片视觉效果。
-
-默认采用 `--operation sync`：第一次发布创建文档，并在本机记录会话 ID、文档 ID 和已发布消息的 ID/哈希；同一会话继续聊天后再次执行该命令，只在原文档末尾追加新增消息，没有新增消息时不写入。消息编号继续累加，追加内容不重复整篇标题和会话元信息；文档开头的统计与时间范围仍表示首次导出的快照。匹配范围包括渠道、后端身份、namespace 和父目录，需使用同一状态目录及稳定会话 ID。旧配置若显式设置了 `create`，改为 `sync` 或单次指定 `--operation sync`。旧版回执没有会话关联，不能据此自动接续旧文档。
-
-发布已检查的预览，或在回读失败后重试，使用返回的 `output.plan` / `retry.plan`：
-
-```bash
-node bin/larkanything.mjs publish --plan /absolute/path/to/plan.json
-```
-
-保存的计划固定正文、目标和导出键，不会再次读取仍在增长的会话。已有远端回执时只重试校验；错误 JSON 提供文档 URL/id、差异诊断和重试计划。写入结果未知时仍停止自动重放。Agent 应报告程序结果，不能通过删除全部空白或另写验证文件覆盖失败状态。
-
-指定目标与格式：
-
-```bash
-node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --parent-token FOLDER_OR_WIKI_NODE_TOKEN
-node bin/larkanything.mjs publish --channel codex --session YOUR_SESSION_ID --operation create
-node bin/larkanything.mjs publish --channel claude-code --input /path/session.jsonl --operation append --document DOCUMENT_URL_OR_ID
-node bin/larkanything.mjs publish --channel codex --input /path/session.jsonl --config examples/larkanything.config.json --profile engineering
-```
-
-首次授权需要用户在飞书完成。保存位置、可用能力和访问权限受账号、租户及授权范围限制。Lark 与飞书的区域、域名和认证交给官方 CLI 配置处理。
-
-## 可选：作为 Codex 插件安装
-
-普通用户优先使用上面的懒人安装。以下是插件市场分发方式，与个人 Skill 安装二选一即可。
-
-仓库包含 portable `plugin.json`、Codex 兼容 manifest 和 `.agents/plugins/marketplace.json`。
-
-本地开发时，在项目根目录注册市场：
-
-```bash
-codex plugin marketplace add .
-```
-
-在 Codex 插件界面选择 LarkAnything 市场并安装。安装后的插件目录需要执行一次 `npm ci --ignore-scripts`，并完成 Lark CLI 授权；然后在新对话中使用：
-
-> 使用 $larkanything-export，把这个 Codex 会话保存到飞书，不包含工具日志。
-
-Skill 使用选定会话的真实日志，不把当前上下文摘要当作完整对话。插件需要本地执行环境；当前不提供远程 MCP 服务或浏览器扩展。同一市场也可以从本仓库的 GitHub 地址添加。公共插件商店的提交是独立流程，本仓库尚未上架。
-
-## 配置与 Protocol
-
-参见 [完整示例](examples/larkanything.config.json)。覆盖顺序为：
-
-`内置默认值 → defaults → channels[channel] → profiles[name] → 本次 CLI/SDK 参数`
-
-- `protocol` 决定内容选择和文档结构；首版为 `transcript`。
-- `format` 是协议的参数，如角色名称、语言、时间戳、工具日志和转换严格程度。
-- `renderer` 决定传输格式；首版为 `markdown`。
-- `target` 决定后端、操作、目标位置和业务 namespace。
-- `backends` 是后端自己的运行参数；不在配置中填写凭据。
-
-例如，给研究笔记配置专门的飞书目录：
-
-```json
-{
-  "version": 1,
-  "profiles": {
-    "research": {
-      "format": { "locale": "zh-CN", "includeTools": false },
-      "target": { "parentToken": "YOUR_FOLDER_TOKEN", "namespace": "research" }
-    }
-  }
-}
-```
-
-配置中的 `stateDir` 相对配置文件解析；没有配置文件时，默认在当前工作目录 `.larkanything/state` 下保存发布回执。不同账号/业务建议使用独立 namespace 和状态目录。
-
-## 扩展接口
-
-```javascript
-import { createLarkAnything } from './src/index.mjs';
-
-const engine = createLarkAnything({
-  adapters: [myClientAdapter],
-  protocols: [myFormatProtocol],
-  renderers: [myRenderer],
-  backends: [myLarkBackend],
-});
-
-const plan = await engine.plan({
-  channel: myClientAdapter.id,
-  input: '/path/to/export',
-  overrides: { protocol: myFormatProtocol.id, target: { backend: myLarkBackend.id } },
-});
-await engine.publish(plan);
-```
-
-五个可替换接口为 `Adapter`、`FormatProtocol`、`Renderer`、`Backend`、`ReceiptStore`。查看 [TypeScript 接口](src/index.d.ts) 与 [架构说明](docs/ARCHITECTURE.md)。Core 不依赖渠道日志格式；新增来源类型可以注册对应 Protocol，不必伪装成聊天消息。
-
-## 可靠性与边界
-
-- 回执区分 `publishing`、`written`、`verified`、`verification_failed`、`uncertain`。
-- 已验证的冻结计划再次发布时返回原回执。命名 key 绑定一次发布快照，与不同计划发生冲突时直接报错；日常增量推送无需指定 key。
-- 写入结果未知时不自动重发。已获得文档 id 但回读失败时，用 `publish --plan` 重试同一冻结计划，只进行回读。
-- 幂等保证限于**同一状态目录**；多机器/多用户需要共享 ReceiptStore。首版没有分布式事务或自动 exactly-once 保证。
-- 默认 `sync` 按会话关联和消息 checkpoint 仅追加新增消息。已发布历史被修改、截断或切换分支时停止并报告 `SYNC_HISTORY_CHANGED`；尚未完成的发布必须先用原冻结计划恢复。过期计划会报告 `SYNC_STALE_PLAN`，重新准备后再推送。
-- 显式 `create` 创建独立文档，显式 `append --document ...` 追加本次选定的整个导出内容，后者仍可能重复已有文字。这两种操作不建立自动会话关联。
-- 不覆写已有文档，不做双向同步、摘要、自动分享、通知或后台监控。
-- Codex fork 父会话不会自动合并，Claude Code/ChatGPT 按选定分支导出；缺失内容、转换限制和工具日志排除会写入报告。
-- 首版仅解析本机实际存在的日志/用户提供的导出文件，不连接或抓取各 AI 客户端账户。日志格式不是稳定公开契约，需要持续维护真实样例兼容性。
-- 本地预览/计划含导出文字；回执保存状态、错误码和消息 ID/哈希，回读失败时可包含短差异片段，不保存完整正文。原始客户端日志保持原样。
-
-`--strict` 遇到已识别的来源/渲染限制会停止发布。通过本地测试与模拟后端，不等于已在你的飞书租户完成真实发布和视觉验收。
-
-## 开发与路线
-
-```bash
+npm ci
 npm run check
+npm run desktop:check
 npm test
-npm run demo
 ```
 
-当前测试覆盖分支选择、重复事件、格式覆盖、代码围栏、XML 转义、长文本、并发与未知写入结果，以及真实子进程边界下的模拟发布。
+原生打包还需要 Rust 及对应平台的构建工具。[发布工作流](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.0-preview.1/.github/workflows/desktop-release.yml) 分别构建 Windows x64 和 Apple Silicon 安装包，内置官方 CLI 并生成 SHA-256 校验清单。仓库暂留历史 Electron / SwiftUI 代码供参考，当前桌面构建入口使用 Tauri。
 
-接下来按能力逐步扩展：媒体与公式保真 → 更多客户端/浏览器入口 → 远端人工编辑的冲突处理 → GitHub/网页/本地文件来源 → 多维表格等输出类型。每一项都有独立的适配位置；未实现的能力不出现在运行时的 capabilities 中。
-
-MIT License。独立社区项目，与 OpenAI、Anthropic、飞书或 Lark 官方无隶属关系。
+MIT License。独立社区项目，与 OpenAI、Anthropic、飞书或 Lark 官方无隶属关系。内置组件与字体保留各自许可证。
