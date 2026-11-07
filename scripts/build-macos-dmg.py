@@ -34,7 +34,9 @@ def build(app, output):
         'show_status_bar': False, 'show_tab_view': False, 'show_toolbar': False,
         'show_pathbar': False, 'show_sidebar': False, 'arrange_by': None,
         'icon_size': 96, 'text_size': 14, 'grid_spacing': 80,
-        'icon_locations': positions, 'hide_extensions': ['LarkAnything.app'],
+        # SetFile -a E on the signed app adds FinderInfo and breaks codesign.
+        # Keep all layout metadata in the volume's .DS_Store instead.
+        'icon_locations': positions,
     })
     run('hdiutil', 'verify', str(output))
     # Inspect the actual image, not just the source settings or build exit code.
