@@ -8,16 +8,16 @@ LarkAnything 是适用于 Windows 和 macOS 的轻量桌面 App。选择来源�
 
 ## 下载与安装
 
-当前桌面版本：**0.1.2 Preview 2** · [发布说明与校验文件](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.2-preview.2)
+当前桌面版本：**0.1.3 Preview 2** · [发布说明与校验文件](https://github.com/Hans-M-Yin/LarkAnything/releases/tag/desktop-v0.1.3-preview.2)
 
 | 平台 | 下载 | 安装方式 |
 | --- | --- | --- |
-| Windows x64 | [EXE 安装程序 · 约 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.2-preview.2/LarkAnything_0.1.2_x64-setup.exe) | 双击，按向导安装 |
-| Apple Silicon Mac · macOS 13+ | [DMG · 约 23 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.2-preview.2/LarkAnything_0.1.2_aarch64.dmg) | 打开 DMG，将 App 拖入 Applications |
+| Windows x64 | [EXE 安装程序 · 约 15 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.3-preview.2/LarkAnything_0.1.3_x64-setup.exe) | 双击，按向导安装 |
+| Apple Silicon Mac · macOS 13+ | [DMG · 约 23 MB](https://github.com/Hans-M-Yin/LarkAnything/releases/download/desktop-v0.1.3-preview.2/LarkAnything_0.1.3_aarch64.dmg) | 打开 DMG，将 App 拖入 Applications |
 
 **不需要 Git、Node.js、Rust、Xcode，也不用执行终端命令。** 两个平台的安装包均内置官方飞书 CLI 1.0.98。Windows 若缺少 WebView2，安装器会联网安装微软共享运行库。本版暂不提供 Intel Mac 和 Windows ARM 原生安装包。
 
-当前为**预览版**：Windows 尚未使用发布者证书签名；Mac 使用 ad-hoc 签名，尚未完成 Apple Developer ID 签名和公证。系统可能提示未知开发者，处理方式见[安装说明](docs/DESKTOP-INSTALL.md)。Mac 打包与自动检查已通过，真机安装、授权与界面仍待测试。
+当前为**预览版**：Windows 尚未使用发布者证书签名；Mac 使用 ad-hoc 签名，尚未完成 Apple Developer ID 签名和公证。系统可能提示未知开发者，处理方式见[安装说明](docs/DESKTOP-INSTALL.md)。用户已在真实 Mac 上确认上一版飞书连接与正常运行。本版恢复 macOS 原生窗口按钮，构建与自动检查已通过；新增窗口交互仍待真机确认。
 
 ## 第一次使用
 
@@ -53,11 +53,11 @@ App 会列出可选内容，由你确认要上传哪一项，不会根据其他 
 
 ## 可选：CLI、Skill 与 SDK
 
-需要由 Agent 发起导出、编写自动化或接入自定义来源时，参阅 [CLI、Skill 与 SDK 指南](docs/CLI-AND-SDK.zh-CN.md)、[Agent 安装说明](INSTALL.md)及 [TypeScript 接口](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.2-preview.2/src/index.d.ts)。这些是可选用法，具有独立的开发与运行环境要求。
+需要由 Agent 发起导出、编写自动化或接入自定义来源时，参阅 [CLI、Skill 与 SDK 指南](docs/CLI-AND-SDK.zh-CN.md)、[Agent 安装说明](INSTALL.md)及 [TypeScript 接口](https://github.com/Hans-M-Yin/LarkAnything/tree/desktop-v0.1.3-preview.2/src/index.d.ts)。这些是可选用法，具有独立的开发与运行环境要求。
 
 ## 从源码开发
 
-标准桌面版采用 Tauri、Rust 和 React，统一在 `main` 维护。已发布预览版仍对应标签 `desktop-v0.1.2-preview.2`。
+标准桌面版采用 Tauri、Rust 和 React，统一在 `main` 维护。已发布预览版仍对应标签 `desktop-v0.1.3-preview.2`。
 
 开发与打包请参考 [Windows 与 Mac 构建说明](docs/BUILD.md)：
 

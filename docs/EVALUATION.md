@@ -101,7 +101,7 @@ node scripts/evaluation/opencode-live.mjs .larkanything/evaluation/tools/node_mo
 | Markdown | 扩展名、大小、Unicode、重新读取、原生选择器、预览、源文件删除处理，App 按钮真实上传回读 | 多次选择、权限拒绝、超大文件交互、各边界组合 |
 | Word | 合成 OOXML 回归；真实 Word 界面生成标题/中文/emoji，原生选择器导入与预览；Core 真实上传回读 | 实际复杂表格、嵌入、图片、批注、修订等；Word 来源的 App 按钮发布尚未单独测试 |
 | 飞书 | 模拟异常/幂等；真实 Markdown 与 Word 发布回读；Markdown 的 App 完整选择/预览/按钮上传链路 | 其余来源、自定义文件夹权限、真实断网/令牌过期、飞书视觉保真 |
-| macOS | 本轮尚未运行 | Apple Silicon 安装、权限、文件选择、预览、真实发布 |
+| macOS | 用户反馈上一版飞书连接与正常运行通过；0.1.3 ARM64 构建、DMG 挂载校验和原生窗口配置测试通过 | 新版红黄绿按钮、Dock 重开、Cmd+Q、全屏与主题切换真机确认；其余来源与权限边界 |
 | 安装/升级 | 本轮使用开发构建 | 干净环境安装、覆盖升级、卸载重装 |
 | 性能/稳定性 | 常规功能与短时桌面冒烟 | 大量文件、超长会话、快速切换、长时间运行 |
 
@@ -135,3 +135,13 @@ Notion 使用 API，不要求安装桌面客户端。真实验收需要工作区
 - 修复提交 `8309e0d` 的 macOS ARM64 构建通过：实际挂载 DMG，验证 Applications 链接、两侧图标坐标、图片背景、App 签名结构及内置 CLI。窗口大小为 640×280，图标坐标分别为 (140,120) 和 (500,120)。
 - 构建证据：[GitHub Actions](https://github.com/Hans-M-Yin/LarkAnything/actions/runs/42350617709)，另有 `macos-dmg-verification` 附件。真实 Mac 上的最终视觉效果仍需用户确认。
 - 公证状态明确为 `not-configured`：项目所有者暂无付费 Apple Developer Program 会员。Developer ID 配置路径已准备，但签名、公证及 Gatekeeper 正式放行没有实际验收；当前预览包仍会出现 Apple 验证提示。
+
+## 2026-11-07：macOS 原生窗口控制（0.1.3 Preview 2）
+
+- 根因：跨平台窗口统一关闭系统装饰，React 在所有系统渲染 Windows 风格的右上角按钮。
+- macOS 专用配置恢复原生标题栏，React 依据原生层平台标识移除自绘标题栏；Windows 保留现有按钮。原生主题随 App 设置同步，Mac 快捷键使用 Cmd。
+- Mac 关闭主窗口保留 App，Dock 重开恢复窗口，Cmd+Q 退出；全屏或最大化时展开预览不再调整系统管理的窗口尺寸。
+- Windows 本地 TypeScript、桌面构建和检查通过。`node desktop/window-chrome-smoke.mjs` 在 Edge 中覆盖 darwin / win32 渲染分支、主题转发与查找快捷键；这是渲染器测试，不模拟或证明 AppKit 按钮行为。
+- [发布构建 42364332206](https://github.com/Hans-M-Yin/LarkAnything/actions/runs/42364332206) 的 Windows x64 和 macOS ARM64 作业均通过，包括原生配置 Rust 测试。macOS 测试为 2 通过、1 项系统凭据测试默认忽略；实际 DMG 挂载布局与应用签名结构校验通过。
+- 首次候选构建被新增 Mac 测试的重复 Info.plist 符号阻止，未发布；修复为共用一个编译上下文后重新构建通过。发布源码提交 `05db017`，标签 `desktop-v0.1.3-preview.2`。
+- EXE 与 DMG 的 SHA-256 清单分别与 GitHub 附件摘要核对通过。新版原生红黄绿操作、Dock 重开、Cmd+Q、全屏预览与主题视觉效果仍待真实 Mac 确认；不将构建成功等同于真机验收。
