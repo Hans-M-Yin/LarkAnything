@@ -2,12 +2,16 @@
 
 ## 下载与安装
 
-- **Windows**：下载 `LarkAnything_0.1.1_x64-setup.exe`，双击安装。
-- **Apple Silicon Mac**：下载 `LarkAnything_0.1.1_aarch64.dmg`，打开后拖入 Applications。
+- **Windows**：下载 `LarkAnything_0.1.2_x64-setup.exe`，双击安装。
+- **Apple Silicon Mac**：下载 `LarkAnything_0.1.2_aarch64.dmg`，打开后拖入 Applications。
 - 无需 Git、Node.js、Rust 或 Xcode；安装包已包含官方飞书 CLI 1.0.98。首次打开按 App 引导配置自己的飞书应用和账号授权。
 - 详细步骤见附件 `INSTALL.md`，完整性校验见 `SHA256SUMS.txt`。
 
 ## 本版内容
+
+- 修复 GitHub Actions 生成 DMG 时未应用 Finder 布局的问题：固定 App 与 Applications 图标、箭头背景和拖拽提示。
+- 挂载实际 DMG 校验应用、Applications 快捷链接、图标位置和背景，校验失败则停止发布。
+- 接入可选 Developer ID 签名与公证流程；本次尚无开发者证书，仍为 ad-hoc 预览包，会出现 Apple 验证提示。
 
 - Notion 令牌安全持久化：Windows 凭据管理器 / macOS 钥匙串；重启自动读取，支持更新和删除。
 - 保留飞书连接配置及登录凭据，新增配置恢复回归验证。

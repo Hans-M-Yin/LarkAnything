@@ -31,14 +31,31 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+      - uses: actions/setup-python@v5
+        if: runner.os == 'macOS'
+        with:
+          python-version: '3.12'
+      - name: Install deterministic DMG builder
+        if: runner.os == 'macOS'
+        run: python3 -m pip install -r scripts/macos-dmg-requirements.txt
       - run: npm ci
       - run: npm run check
       - run: npm run desktop:check
       - run: npm test
-      - name: Build installer with official native CLI
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: ${{ matrix.command }} -- --target ${{ matrix.target }}
+      - name: Build macOS app and deterministic DMG
+        if: runner.os == 'macOS'
         run: ${{ matrix.command }} -- --target ${{ matrix.target }}
         env:
-          APPLE_SIGNING_IDENTITY: '-'
+          MACOS_SIGNING_MODE: ${{ vars.MACOS_SIGNING_MODE || 'adhoc' }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - name: Verify Windows executable icon
         if: runner.os == 'Windows'
         shell: pwsh
@@ -52,6 +69,12 @@ jobs:
           file "$app/Contents/MacOS/larkanything-desktop"
           test -x "$app/Contents/Resources/lark-cli/lark-cli"
           "$app/Contents/Resources/lark-cli/lark-cli" --version
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          name: macos-dmg-verification
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.verification.json
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: installer-${{ matrix.target }}

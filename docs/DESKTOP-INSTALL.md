@@ -8,7 +8,7 @@
 
 ## Apple Silicon Mac
 
-下载名称含 `aarch64.dmg` 的文件，打开后把 LarkAnything 拖入 Applications（应用程序），再从应用程序启动。支持 Apple Silicon（M 系列芯片）、macOS 13 或更高版本；此次不提供 Intel Mac 安装包。
+下载名称含 `aarch64.dmg` 的文件，打开后按箭头把左侧 LarkAnything 拖入右侧 Applications（应用程序），等待复制完成，再从应用程序启动。窗口标题也会提示“拖入 Applications”；无需在磁盘映像内双击 App。支持 Apple Silicon（M 系列芯片）、macOS 13 或更高版本；此次不提供 Intel Mac 安装包。
 
 这是预览版：Windows 尚未进行发布者证书签名；Mac 使用 ad-hoc 签名，尚未完成 Apple Developer ID 签名及公证。系统可能提示无法验证开发者。确认从本仓库的 Release 下载后，可使用系统提供的批准入口；macOS 对应“系统设置 → 隐私与安全性 → 仍要打开”。组织策略可能禁止该操作，不需要关闭系统安全保护。Mac 的真实设备安装、钥匙串授权和显示效果仍需测试。
 

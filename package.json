@@ -49,7 +49,7 @@
     "desktop:check": "tsc -p desktop/tsconfig.json",
     "desktop:smoke": "node desktop/tauri/smoke.mjs",
     "desktop:setup:smoke": "node desktop/onboarding-smoke.mjs",
-    "desktop:package:mac": "tauri build --bundles app,dmg",
+    "desktop:package:mac": "node scripts/package-macos.mjs",
     "desktop:package:win": "tauri build --bundles nsis"
   },
   "dependencies": {

@@ -24,15 +24,39 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+      - uses: actions/setup-python@v5
+        if: runner.os == 'macOS'
+        with:
+          python-version: '3.12'
+      - name: Install deterministic DMG builder
+        if: runner.os == 'macOS'
+        run: python3 -m pip install -r scripts/macos-dmg-requirements.txt
       - run: npm ci
       - run: npm run desktop:check
       - run: npm test
-      - run: ${{ matrix.command }} -- --target ${{ matrix.target }}
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: ${{ matrix.command }} -- --target ${{ matrix.target }}
+      - name: Build macOS app and deterministic DMG
+        if: runner.os == 'macOS'
+        run: ${{ matrix.command }} -- --target ${{ matrix.target }}
         env:
-          APPLE_SIGNING_IDENTITY: '-'
+          MACOS_SIGNING_MODE: ${{ vars.MACOS_SIGNING_MODE || 'adhoc' }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'macOS'
+        with:
+          name: macos-dmg-verification
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.verification.json
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: LarkAnything-${{ matrix.target }}-unsigned
+          name: LarkAnything-${{ matrix.target }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg

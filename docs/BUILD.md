@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-windows-icon.
 bash scripts/tauri-mac-install.sh
 ```
 
-输出在 `src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/`。脚本默认使用 ad-hoc 签名；可通过 APPLE_SIGNING_IDENTITY 指定自己的签名身份。正式分发仍需相应证书和 Apple 公证。
+输出在 `src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/`。脚本会安装 Python dmgbuild 构建依赖，以固定图标、箭头和 Finder 布局；默认使用 ad-hoc 签名。正式 Developer ID 签名、公证和 GitHub Secrets 配置见 [MACOS-SIGNING.md](MACOS-SIGNING.md)。
 
 卸载可将 App 移到废纸篓，或运行 `bash scripts/tauri-mac-uninstall.sh`。保留用户设置、回执及独立安装的 CLI。
 
