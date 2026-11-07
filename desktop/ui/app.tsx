@@ -9,7 +9,7 @@ import { useShortcuts, shortcutLabel, shortcutAria } from './useShortcuts';
 type Settings = { parentToken: string; includeTools: boolean; executable: string; vault?: string; codexHome?: string; claudeHome?: string; opencodeExecutable?: string };
 type Item = { id: string; title: string; excerpt?: string; location?: string; modified: number; count?: number; error?: string };
 type Preview = { token: string; title: string; html: string; operation: string; target: string; warnings?: {message:string}[] };
-declare global { interface Window { larkAnything: SetupAPI & { setExpanded(value: boolean): Promise<void>; settings(): Promise<Settings>; checkConnection(): Promise<{ ok: boolean; message: string }>; beginConnection(): Promise<{ connected?: boolean; message?: string; url?: string }>; finishConnection(): Promise<{ ok: boolean; message: string }>; openAuthorization(): Promise<void>; saveSettings(v: Settings): Promise<Settings>; list(c: string): Promise<Item[]>; preview(id: string): Promise<Preview>; publish(t: string): Promise<{ remote?: { url?: string }; reused?: boolean }>; chooseDocument(kind: string): Promise<string | null>; importFile(kind: string, path: string): Promise<Item>; connectNotion(token: string): Promise<boolean>; chooseDirectory(): Promise<string | null>; chooseExecutable(): Promise<string | null>; openResult(u: string): Promise<void> } } }
+declare global { interface Window { larkAnything: SetupAPI & { setExpanded(value: boolean): Promise<void>; settings(): Promise<Settings>; checkConnection(): Promise<{ ok: boolean; message: string }>; beginConnection(): Promise<{ connected?: boolean; message?: string; url?: string }>; finishConnection(): Promise<{ ok: boolean; message: string }>; openAuthorization(): Promise<void>; saveSettings(v: Settings): Promise<Settings>; list(c: string): Promise<Item[]>; preview(id: string): Promise<Preview>; publish(t: string): Promise<{ remote?: { url?: string }; reused?: boolean }>; chooseDocument(kind: string): Promise<string | null>; importFile(kind: string, path: string): Promise<Item>; connectNotion(token: string): Promise<boolean>; notionConnection(): Promise<{saved:boolean}>; disconnectNotion(): Promise<void>; chooseDirectory(): Promise<string | null>; chooseExecutable(): Promise<string | null>; openResult(u: string): Promise<void> } } }
 const api = window.larkAnything;
 const previewFonts = new URL('./assets/fonts/fonts.css', location.href).href;
 function excerpt(text = '', title = '') {
@@ -53,6 +53,7 @@ function App() {
   const searchInput = useRef<HTMLInputElement>(null), previewFrame = useRef<HTMLIFrameElement>(null);
   const fail = (e: unknown) => setError(e instanceof Error ? e.message : String(e));
   const [notionToken,setNotionToken]=useState(''), [notionStatus,setNotionStatus]=useState('');
+  const [notionSaved,setNotionSaved]=useState(false);
   const busy = publishing || preparing;
   const fileSource=['markdown','docx'].includes(channel);
   async function chooseFile(){try{const path=await api.chooseDocument(channel);if(path){await api.importFile(channel,path);await refresh();}}catch(e){fail(e);}}
@@ -60,6 +61,12 @@ function App() {
   const openSettings = () => { if (settings) { setDraft({ ...settings }); setSettingsError(''); setEditing(true); } };
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('la-theme', theme); }, [theme]);
   useEffect(() => { if (editing) dialog.current?.showModal(); else { dialog.current?.close(); setNotionToken(''); } }, [editing]);
+  useEffect(() => {
+    if (!editing) return;
+    let active=true;
+    api.notionConnection().then(value=>{if(active){setNotionSaved(value.saved);setNotionStatus(value.saved?'已保存令牌，重启后自动使用；可刷新列表检查连接。':'尚未连接 Notion。');}}).catch(e=>{if(active)setNotionStatus(String(e.message||e));});
+    return ()=>{active=false;};
+  }, [editing]);
   async function refresh() {
     const version = ++sequence.current; ++selection.current;
     setPreparing(false); setLoading(true); setItems([]); setPreview(null); setSelected(''); setError(''); setCompleted(false);
@@ -131,11 +138,13 @@ function App() {
       {draft && <><div className="section-title"><h2 id="settings-title">设置</h2><button className="icon-button" disabled={saving} onClick={() => setEditing(false)} aria-label="关闭设置"><X size={18}/></button></div><p className="modal-description">连接本地内容，设置默认保存位置。</p>
       <form onSubmit={save}><fieldset disabled={saving}>
         <button type="button" className="secondary" onClick={() => { setEditing(false); setOnboarding(true); }}>配置飞书连接</button>
+        <p className="hint">飞书连接配置和登录凭据会保留，重启后自动使用；保存位置修改后请点击“保存设置”。</p>
         <label>飞书保存位置<input autoFocus value={draft.parentToken} placeholder="文件夹 / 知识库链接，留空使用默认位置" onChange={e => setDraft({ ...draft, parentToken: e.target.value })}/></label>
         <details className="settings-group"><summary>Notion 连接</summary>
         <label>集成令牌<input type="password" autoComplete="off" value={notionToken} onChange={e=>setNotionToken(e.target.value)} placeholder="输入 Notion Integration Token"/></label>
-        <p className="hint">在 Notion 页面菜单中为页面添加此连接。令牌仅用于本次运行，关闭 App 后清除。</p>
-        <button type="button" className="secondary" disabled={!notionToken} onClick={async()=>{setSaving(true);try{await api.connectNotion(notionToken);setNotionToken('');setNotionStatus('连接成功，关闭设置后刷新 Notion 列表。');}catch(e){setNotionStatus(e instanceof Error?e.message:String(e));}finally{setSaving(false);}}}>连接 Notion</button>
+        <p className="hint">在 Notion 页面菜单中为页面添加此连接。连接成功后令牌保存到系统凭据存储，重启自动使用。</p>
+        <button type="button" className="secondary" disabled={!notionToken} onClick={async()=>{setSaving(true);try{await api.connectNotion(notionToken);setNotionToken('');setNotionSaved(true);setNotionStatus('连接成功，令牌已安全保存，重启后无需重新输入。');}catch(e){setNotionStatus(e instanceof Error?e.message:String(e));}finally{setSaving(false);}}}>{notionSaved?'更新令牌':'连接 Notion'}</button>
+        {notionSaved && <button type="button" className="secondary" onClick={async()=>{setSaving(true);try{await api.disconnectNotion();setNotionSaved(false);setNotionToken('');setNotionStatus('已断开连接并删除保存的令牌。');if(channel==='notion'){setItems([]);setSelected('');setPreview(null);setCompleted(false);}}catch(e){setNotionStatus(e instanceof Error?e.message:String(e));}finally{setSaving(false);}}}>断开连接并删除令牌</button>}
         <p role="status" className="hint">{notionStatus}</p>
         </details><details className="settings-group"><summary>内容来源与高级设置</summary>
         {([{ key: 'vault', label: 'Obsidian 仓库', placeholder: '选择你的 Vault 文件夹' }, { key: 'codexHome', label: 'Codex 数据目录', placeholder: '默认 ~/.codex' }, { key: 'claudeHome', label: 'Claude Code 数据目录', placeholder: '默认 ~/.claude' }, { key: 'opencodeExecutable', label: 'OpenCode 可执行文件', placeholder: '留空从 PATH 查找原生 OpenCode 程序' }, { key: 'executable', label: '飞书 CLI 可执行文件', placeholder: '选择已授权的 CLI 可执行文件' }] as const).map(field => <label key={field.key}>{field.label}<div className="path-field"><input placeholder={field.placeholder} value={draft[field.key] || ''} onChange={e => setDraft({ ...draft, [field.key]: e.target.value })}/><button type="button" aria-label={`选择${field.label}`} onClick={async () => { try { const value = await (['executable','opencodeExecutable'].includes(field.key) ? api.chooseExecutable() : api.chooseDirectory()); if (value) setDraft(s => ({ ...s!, [field.key]: value })); } catch (e) { setSettingsError(e instanceof Error ? e.message : String(e)); } }}><Folder size={15}/></button></div></label>)}

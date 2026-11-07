@@ -5,11 +5,10 @@ import { hash } from '../../src/core/model.mjs';
 const run=args=>new Promise((resolve,reject)=>execFile('opencode',args,{timeout:30000,maxBuffer:32*1024*1024},(e,out)=>e?reject(new Error('OpenCode 读取失败，请检查设置中的原生可执行文件路径和版本。')):resolve(out)));
 export function createSources({transport = native, command = run} = {}){
  const cliVersion = async()=>String(await command(['--version'])).trim();
- let notionToken='';
  const selected=new Map();
- const notion=(action,id,cursor)=>transport('notion',{token:notionToken,action,id,cursor});
- const notionList=async cursor=>{
-  const page=await notion('list',null,cursor);
+ const notion=(action,id,cursor,token)=>transport('notion',{...(token?{token}:{}),action,id,cursor});
+ const notionList=async (cursor,token)=>{
+  const page=await notion('list',null,cursor,token);
   if(!page||!Array.isArray(page.results)||typeof page.has_more!=='boolean')throw new Error('Notion 返回的列表格式无效。');
   if(page.has_more&&(typeof page.next_cursor!=='string'||!page.next_cursor.trim()))throw new Error('Notion 分页结果不完整。');
   return page;
@@ -17,10 +16,13 @@ export function createSources({transport = native, command = run} = {}){
  return {
   async connectNotion(token) {
    if(typeof token!=='string'||!token.trim())throw new Error('请输入 Notion 集成令牌，并在 Notion 中为页面添加此连接。');
-   const old=notionToken;notionToken=token.trim();
-   try{await notionList();}catch(e){notionToken=old;throw e;}
+   // Validate the replacement before touching the previously saved credential.
+   await notionList(undefined,token.trim());
+   await transport('notion_credential',{action:'save',token:token.trim()});
    return true;
   },
+  notionConnection(){return transport('notion_credential',{action:'status'});},
+  disconnectNotion(){return transport('notion_credential',{action:'delete'});},
   async importFile(channel,path){
    if(!['markdown','docx'].includes(channel)||!new RegExp(channel==='docx'?'\\.docx$':'\\.md$','i').test(path))throw new Error('文件类型不匹配。');
    const info=await transport('stat',{path});
@@ -48,7 +50,6 @@ export function createSources({transport = native, command = run} = {}){
     if(!Array.isArray(rows))throw new Error('不支持的 OpenCode 列表格式。');
     return rows.map(r=>({id:'opencode:'+r.id,title:r.title||r.id,location:r.location?.directory||r.directory||'',modified:r.time?.updated||r.updated||0}));
    }
-   if(!notionToken)throw new Error('请在设置中连接 Notion，并为所需页面添加该连接。');
    const all=[];const seen=new Set();let cursor;
    do{
     const page=await notionList(cursor);

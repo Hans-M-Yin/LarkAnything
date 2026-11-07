@@ -97,7 +97,7 @@ node scripts/evaluation/opencode-live.mjs .larkanything/evaluation/tools/node_mo
 | Claude Code | 分支链解析回归、原生窗口合成会话发现与预览 | 官方客户端生成的长会话、恢复/分支/工具调用；目前无账号环境 |
 | Obsidian | 原生文件系统中的合成 vault、Unicode 与预览 | Obsidian 实际编辑保存、嵌入、附件、双链、复杂笔记 |
 | OpenCode | 官方 Windows CLI 1.19.5、2.2.6 合成会话往返通过 | 真实模型生成长会话；App 内调用真实 CLI；macOS |
-| Notion | 模拟分页、异常、截断检测 | 工作区集成、页面授权、真实分页及复杂块；用户暂无环境 |
+| Notion | 模拟分页、异常、截断检测；用户反馈真实上传完整成功，App 窗口可见已通过回读校验；Windows 凭据持久化专项通过 | 复杂块、真实多页分页、撤销权限与令牌过期；新版真实令牌重启恢复仍需用户输入一次后验收 |
 | Markdown | 扩展名、大小、Unicode、重新读取、原生选择器、预览、源文件删除处理，App 按钮真实上传回读 | 多次选择、权限拒绝、超大文件交互、各边界组合 |
 | Word | 合成 OOXML 回归；真实 Word 界面生成标题/中文/emoji，原生选择器导入与预览；Core 真实上传回读 | 实际复杂表格、嵌入、图片、批注、修订等；Word 来源的 App 按钮发布尚未单独测试 |
 | 飞书 | 模拟异常/幂等；真实 Markdown 与 Word 发布回读；Markdown 的 App 完整选择/预览/按钮上传链路 | 其余来源、自定义文件夹权限、真实断网/令牌过期、飞书视觉保真 |
@@ -116,3 +116,14 @@ Notion 使用 API，不要求安装桌面客户端。真实验收需要工作区
 5. 发布候选需补齐真实客户端、系统选择器、真实飞书回读与 macOS 验收；本轮离线全绿不等于达到发布验收条件。
 
 历史证据摘要保存在 [evaluation/runs](evaluation/runs)。本轮原始运行记录保存在项目 `.larkanything/evaluation`，原生 UI 截图在 `.larkanything/tauri-smoke-*`。
+
+## 2026-11-07：连接持久化
+
+- Notion 从仅内存令牌改为系统凭据存储（Windows Credential Manager / macOS Keychain），按数据目录隔离；成功校验后保存，重启由原生层读取，状态接口只返回布尔值。
+- 更新令牌失败或网络失败不会删除原凭据；支持主动断开并删除；401 与页面权限错误分开提示。
+- 飞书沿用现有 CLI 管理的持久凭据与 configDir，补测保存设置后重新创建服务仍能加载原配置和登录状态（模拟认证，不代表新做了真实账号重启验收）。
+- Node 全量测试：145 项，142 通过、3 项原有 Windows 跳过。新增回归覆盖存储失败、令牌更新失败、网络错误保留凭据、服务重建及删除。
+- Windows OS 凭据测试：唯一隔离命名空间、虚构令牌，三个独立 Rust 测试进程分别保存、读取、删除，全部通过。未读取或修改用户真实凭据。
+- Tauri/WebView2 冒烟：虚构令牌写入隔离系统存储，WebView/worker 重建后显示已保存且输入框为空；点击删除后再次重建确认清除；飞书保存位置保留。结果在 `.larkanything/tauri-smoke-1794032795301/result.json`。
+- Core/桌面 TypeScript、构建检查及 Windows debug 编译通过。macOS 已实现对应后端，但尚未实机验收。
+- 当前只更新本地开发测试版，尚未推送或替换 GitHub 安装包。

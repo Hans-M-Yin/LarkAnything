@@ -89,7 +89,7 @@ export const cases = [
   assert.equal(model.messages[2].role,'tool');assert.ok(!JSON.stringify(model).includes('PRIVATE_QA_SENTINEL'));assert.equal(model.source.completeness,'partial');
  }},
  {id:'NOTION-001',source:'notion',level:'mock API',title:'Repeated pagination cursor stops with an explicit error',async run(){
-  let calls=0;const source=createSources({transport:async()=>{if(++calls>4)throw new Error('QA_NETWORK_GUARD: repeated requests');return {results:[],has_more:true,next_cursor:'same'};}});
+  let calls=0;const source=createSources({transport:async op=>{if(op==='notion_credential')return; if(++calls>4)throw new Error('QA_NETWORK_GUARD: repeated requests');return {results:[],has_more:true,next_cursor:'same'};}});
   await source.connectNotion('synthetic-token');
   await assert.rejects(source.list('notion'),/分页.*重复|重复.*分页/);assert.ok(calls<=3);
  }},
@@ -102,7 +102,7 @@ export const cases = [
   await assert.rejects(source.load('notion',{id:'notion:qa',title:'QA'}),/完整/);
  }},
  {id:'NOTION-004',source:'notion',level:'mock API',title:'Invalid replacement token response rolls back the active connection',async run(){
-  const source=createSources({transport:async(op,args)=>args.token==='valid'?{results:[],has_more:false}:{results:[],has_more:true,next_cursor:null}});
+  let saved;const source=createSources({transport:async(op,args)=>{if(op==='notion_credential'){saved=args.token;return;}return (args.token||saved)==='valid'?{results:[],has_more:false}:{results:[],has_more:true,next_cursor:null};}});
   await source.connectNotion('valid');await assert.rejects(source.connectNotion('bad-response'),/分页/);
   assert.deepEqual(await source.list('notion'),[]);
  }},

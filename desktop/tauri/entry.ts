@@ -27,6 +27,8 @@ async function start() {
     chooseDocument: (kind: string) => invoke('choose', { directory: false, kind }),
     importFile: (kind: string, path: string) => request('importFile', kind, path),
     connectNotion: (token: string) => request('connectNotion', token),
+    notionConnection: () => request('notionConnection'),
+    disconnectNotion: () => request('disconnectNotion'),
     openResult: (url: string) => invoke('native', { op: 'open_url', args: { url } }),
   });
   await import('../ui/app');

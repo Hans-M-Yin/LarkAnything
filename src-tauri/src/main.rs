@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod credentials;
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
@@ -375,8 +376,25 @@ async fn native(
     if op == "process_start" {
         return start_process(&state, &args).await;
     }
+    if op == "notion_credential" {
+        return match string(&args, "action")? {
+            "status" => Ok(json!({"saved": credentials::read(&state.root)?.is_some()})),
+            "save" => {
+                let token = string(&args, "token")?;
+                if token.len() > 4096 || token.trim().is_empty() { return Err(failure("Notion 令牌无效", "EINVAL")); }
+                credentials::save(&state.root, token)?;
+                Ok(Value::Null)
+            },
+            "delete" => { credentials::delete(&state.root)?; Ok(Value::Null) },
+            _ => Err(failure("Unsupported credential action", "EACCES")),
+        };
+    }
     if op == "notion" {
-        let token = string(&args, "token")?;
+        let saved;
+        let token = if let Some(candidate) = args["token"].as_str() { candidate } else {
+            saved = credentials::read(&state.root)?.ok_or_else(|| failure("请在设置中连接 Notion，并为所需页面添加该连接。", "ENOTION_AUTH"))?;
+            &saved
+        };
         if token.len() > 4096 || token.trim().is_empty() { return Err(failure("Notion 令牌无效", "EINVAL")); }
         let client = reqwest::Client::builder().timeout(Duration::from_secs(30))
             .redirect(reqwest::redirect::Policy::none()).build().map_err(|_|failure("无法初始化 Notion 连接","ENET"))?;
@@ -395,7 +413,15 @@ async fn native(
         };
         let mut response=request.bearer_auth(token).header("Notion-Version","2026-03-11").send().await.map_err(|_|failure("Notion 网络连接失败或超时","ENET"))?;
         let status=response.status();
-        if !status.is_success() {return Err(failure(format!("Notion 请求失败（{}），请检查令牌、页面连接权限或稍后重试",status.as_u16()),"ENOTION"));}
+        if !status.is_success() {
+            let message = match status.as_u16() {
+                401 => "Notion 令牌无效或已撤销，请在设置中更新令牌。已保存的配置不会自动删除。".to_string(),
+                403 | 404 => "Notion 页面不可访问，请检查集成权限和页面连接。".to_string(),
+                429 => "Notion 请求过于频繁，请稍后重试。".to_string(),
+                _ => format!("Notion 请求失败（{}），请稍后重试。",status.as_u16()),
+            };
+            return Err(failure(message,"ENOTION"));
+        }
         if response.content_length().unwrap_or(0)>20*1024*1024 {return Err(failure("Notion 页面过大","EFBIG"));}
         let mut bytes=Vec::new();
         while let Some(chunk)=response.chunk().await.map_err(|_|failure("Notion 响应读取失败","ENET"))? {

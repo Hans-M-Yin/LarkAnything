@@ -13,6 +13,11 @@ onmessage = async ({ data }) => {
       service.sources = createSources();
     } else if (data.method === 'connectNotion') {
       value = await service.sources.connectNotion(...data.args);
+    } else if (data.method === 'notionConnection') {
+      value = await service.sources.notionConnection();
+    } else if (data.method === 'disconnectNotion') {
+      value = await service.sources.disconnectNotion();
+      service.items.clear(); service.plans.clear();
     } else if (data.method === 'importFile') {
       value = await service.sources.importFile(...data.args);
     } else if (!service) throw new Error('Service not ready');

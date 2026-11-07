@@ -6,7 +6,7 @@
 
 React 负责来源列表、预览、设置与连接引导。共享 Core 和适配器在 Web Worker 中运行，Rust 提供受约束的文件操作、文件选择、进程运行、窗口控制与网络代理。预览正文不能直接调用原生接口。
 
-Codex、Claude Code、Obsidian、OpenCode、Notion、Markdown 和 DOCX 统一进入 Core 转换、冻结预览和发布回读流程。来源图标用于选择内容，不代表连接到其他 App 的活动窗口。Markdown / DOCX 使用限定格式的原生选择器；Notion 令牌仅保留在当前运行内存中。
+Codex、Claude Code、Obsidian、OpenCode、Notion、Markdown 和 DOCX 统一进入 Core 转换、冻结预览和发布回读流程。来源图标用于选择内容，不代表连接到其他 App 的活动窗口。Markdown / DOCX 使用限定格式的原生选择器；Notion 令牌验证成功后保存在 Windows 凭据管理器或 macOS 钥匙串中，按 App 数据目录隔离；重启时由原生层读取，不回传令牌给界面。设置中可更新令牌或断开连接并删除凭据。飞书连接配置、保存位置和 CLI 管理的登录凭据已经持久化，重启自动使用；授权过期或被撤销时仍需重新授权。旧版内存令牌无法从已关闭的进程恢复，升级后需连接一次。
 
 CLI、个人 Skill 与 JavaScript SDK 继续使用同一 Core。对话身份、消息哈希和回执保持兼容；写入结果未知时禁止自动重传。
 

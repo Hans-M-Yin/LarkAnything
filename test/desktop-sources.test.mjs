@@ -24,8 +24,10 @@ test('file import validates extension and rereads selected file',async()=>{
  assert.equal((await source.list('markdown')).length,1);
 });
 test('Notion pagination, title, incomplete content and token rollback',async()=>{
- let pages=0;let truncated=false;
+ let pages=0;let truncated=false;let saved;
  const source=createSources({transport:async(op,args)=>{
+  if(op==='notion_credential'){saved=args.token;return;}
+  if(!args.token&&!saved)throw new Error('请连接 Notion');
   if(args.token==='bad')throw new Error('unauthorized');
   if(args.action==='read')return {markdown:'# page',truncated};
   pages++;return args.cursor?{results:[{object:'page',id:'b',properties:{},last_edited_time:'2026-01-01'}],has_more:false}:{results:[{object:'page',id:'a',properties:{Name:{type:'title',title:[{plain_text:'Title'}]}}}],has_more:true,next_cursor:'next'};

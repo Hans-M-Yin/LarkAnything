@@ -40,7 +40,7 @@ The App lists available content for you to select; it does not infer the active 
 | Markdown | Choose an `.md` file with the file picker |
 | Microsoft Word | Choose a `.docx` file; Word itself is not required |
 
-All sources use the same Core conversion, preview and publishing pipeline. Notion tokens remain in memory for the current run; reconnect after restarting. File imports are limited to 20 MB per file. DOCX supports text, headings, lists and tables; images and complex layouts are not preserved. ChatGPT export JSON is also supported through the optional CLI/SDK.
+All sources use the same Core conversion, preview and publishing pipeline. Notion tokens are saved in Windows Credential Manager or macOS Keychain and reused after restarting. Feishu connection settings and CLI-managed login credentials also persist; secrets are not copied into app JSON settings. File imports are limited to 20 MB per file. DOCX supports text, headings, lists and tables; images and complex layouts are not preserved. ChatGPT export JSON is also supported through the optional CLI/SDK.
 
 ## Settings, updates and data
 

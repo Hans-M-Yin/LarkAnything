@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-07",
+  "scope": "Connection persistence; synthetic credentials only",
+  "node": {
+    "total": 145,
+    "passed": 142,
+    "skipped": 3,
+    "failed": 0
+  },
+  "windowsNativeStore": {
+    "saveProcess": "passed",
+    "readProcess": "passed",
+    "deleteProcess": "passed"
+  },
+  "tauriSmoke": "passed",
+  "typeChecks": "passed",
+  "macOS": "not run",
+  "userReportedNotionLiveUpload": "passed; UI showed verified receipt; not reuploaded by agent",
+  "realTokenRestart": "pending one-time user input in updated build"
+}

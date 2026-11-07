@@ -149,7 +149,28 @@ try {
   const rejected=await page.evaluate(async()=>{
     try{await window.__TAURI__.core.invoke('native',{op:'process_start',args:{executable:'opencode',args:['session','delete','ses_test']}});return false;}catch{return true;}
   });assert.equal(rejected,true);
+  // Synthetic token only, isolated OS-store entry keyed by this smoke profile.
+  // A WebView reload recreates the worker; native process restart is separately
+  // covered by credentials::tests::os_store_restart across three invocations.
+  try {
+    await page.evaluate(()=>window.__TAURI__.core.invoke('native',{op:'notion_credential',args:{action:'save',token:'synthetic-smoke-token'}}));
+    await page.reload();
+    await page.waitForFunction(()=>!!window.larkAnything);
+    assert.deepEqual(await page.evaluate(()=>window.larkAnything.notionConnection()),{saved:true});
+    assert.equal((await page.evaluate(()=>window.larkAnything.settings())).parentToken,'demo123');
+    await page.getByRole('button',{name:'设置',exact:true}).click();
+    await page.locator('summary').filter({hasText:'Notion 连接'}).click();
+    await page.getByText('已保存令牌，重启后自动使用；可刷新列表检查连接。',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('集成令牌').inputValue(),'');
+    await page.screenshot({path:join(root,'saved-connections.png'),scale:'css',animations:'disabled'});
+    await page.getByRole('button',{name:'断开连接并删除令牌',exact:true}).click();
+    await page.getByText('已断开连接并删除保存的令牌。',{exact:true}).waitFor();
+    await page.reload();await page.waitForFunction(()=>!!window.larkAnything);
+    assert.deepEqual(await page.evaluate(()=>window.larkAnything.notionConnection()),{saved:false});
+  } finally {
+    await page.evaluate(()=>window.__TAURI__.core.invoke('native',{op:'notion_credential',args:{action:'delete'}}));
+  }
   assert.deepEqual(errors,[]);
-  await writeFile(join(root,'result.json'),JSON.stringify({ok:true,scope:'Real Tauri/WebView2, synthetic source data and fake publish CLI; no live account acceptance or OS file-picker automation.',checks:['real-tauri-webview2','worker-core-parity','claude-fixture-discovery-preview','source-icons-layout','unicode-preview','theme','settings','native-cli-local-publish-readback','uncertain-no-replay','exclusive-lock','path-scope','keyboard-shortcuts','preview-keyboard-focus','modal-keyboard-guards','streaming-cancel','timeout','reduced-motion','markdown-import-preview','docx-import-preview','opencode-fake-cli-preview'],screenshots:['home.png','preview.png','dark.png','word-source.png']},null,2));
+  await writeFile(join(root,'result.json'),JSON.stringify({ok:true,scope:'Real Tauri/WebView2, synthetic source data and fake publish CLI; no live account acceptance or OS file-picker automation.',checks:['real-tauri-webview2','worker-core-parity','claude-fixture-discovery-preview','source-icons-layout','unicode-preview','theme','settings','native-cli-local-publish-readback','uncertain-no-replay','exclusive-lock','path-scope','keyboard-shortcuts','preview-keyboard-focus','modal-keyboard-guards','streaming-cancel','timeout','reduced-motion','markdown-import-preview','docx-import-preview','opencode-fake-cli-preview','notion-os-store-worker-restart','notion-disconnect','feishu-settings-reload'],screenshots:['home.png','preview.png','dark.png','word-source.png','saved-connections.png']},null,2));
   console.log(`Tauri native smoke passed. Local fake CLI only. Results: ${root}`);
 } finally {await browser?.close();child.kill();}
