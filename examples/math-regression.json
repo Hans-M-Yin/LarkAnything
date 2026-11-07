@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "kind": "conversation",
+  "id": "synthetic-math-regression",
+  "title": "LarkAnything 矩阵与价格回归测试",
+  "source": { "channel": "generic", "completeness": "complete" },
+  "messages": [
+    {
+      "id": "sample",
+      "role": "assistant",
+      "content": [{
+        "type": "text",
+        "format": "markdown",
+        "text": "这是合成回归样例，不是真实会话。\n\n$$\n\\begin{aligned}\nA &= \\begin{pmatrix}\n1 & 2 \\\\\n3 & 4\n\\end{pmatrix} \\\\\n\\det(A) &= 1 \\times 4 - 2 \\times 3 = -2 \\\\\n\\bar{x} &= \\frac{1}{n}\\sum_{i=1}^{n}x_i\n\\quad \\text{（样本均值）}\n\\end{aligned}\n$$\n\n价格与代码边界：商品价格是 $19.99，另一个商品是 $29.99。代码中的 `$HOME` 和 `price = \"$10\"` 应保持原样。\n\n公式注释测试：\n\n$$\nx % comment ends here\n+ y + 10\\%\n$$\n\nEND-MATH-REGRESSION"
+      }]
+    }
+  ]
+}

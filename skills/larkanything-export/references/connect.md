@@ -9,6 +9,8 @@ node <skill-root>/scripts/run.mjs lark auth status --json --verify
 
 The installer prepares the program and personal Skill. Connection is complete only after the CLI confirms a valid user identity and the required document scopes. Reuse existing authorization when valid; do not make a new app or request login on every export. Read the available Lark setup/auth skill when the host provides one; otherwise use the bounded flow below. Do not collect credentials in chat or print tokens.
 
+For the standalone desktop App, use Settings → 配置飞书连接. Its packaged CLI, application setup, and user authorization run in the desktop process environment. A successful agent-terminal check does not prove the desktop can access the same OS credential store. Do not copy credentials between contexts or distribute a machine-specific repair helper as an installation step. The launcher automatically honors a desktop-created `backends.lark-cli.configDir`.
+
 ## Missing app configuration
 
 Read `node <skill-root>/scripts/run.mjs lark config init --help` first. When configuration is absent, `config init --new` starts the official browser setup. This can block waiting for the user: start it as an ongoing process, relay its actual verification URL and keep the session available. Generate a QR code with `lark auth qrcode` when its help confirms the syntax; `--output` must be a path relative to the current directory. Let the user complete the app setup in Feishu/Lark and collect completion before proceeding. Reuse an existing app when configured. Do not force initialization inside an unrelated agent-managed application, replace an existing profile, or invent app secrets.

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { prepareMarkdown, previewHtml, markdownText } from '../src/renderers/markdown.mjs';
-import { protectMath } from '../src/renderers/math.mjs';
+import { protectMath, larkMarkdown, transportTex } from '../src/renderers/math.mjs';
 import { verifyMarkdownReadback } from '../src/backends/readback.mjs';
 import { createLarkAnything, LarkCliBackend } from '../src/index.mjs';
 
@@ -34,6 +34,7 @@ test('Parenthesis, bracket and dollar delimiters preserve LaTeX, comparisons and
 test('Currency, escaped delimiters, code and URLs are never converted to formulas', () => {
   const cases = [
     'Prices are $5 and $10.',
+    '价格是 $19.99，另一个是 $29.99。代码 `$HOME` 和 `price = "$10"` 应保留。',
     String.raw`Literal \$x_i\$ and \\(x_i\\).`,
     '`$x_i$` and ``\\[\nx_i\n\\]``',
     '```latex\n\\[x_i\\]\n$$y_i$$\n```',
@@ -99,6 +100,20 @@ test('Readback matches native formulas against dollar exports and rejects lost m
   }
 });
 
+test('Readback treats Markdown punctuation escapes as text while still checking native formulas', () => {
+  const expected = String.raw`模型: gpt-6.1-sol \(轮次配置\) · \[说明\] · <latex>x_i^2</latex> END`;
+  const actual = '模型: gpt-6.1-sol (轮次配置) · [说明] · $x_i^2$ END';
+  assert.equal(verifyMarkdownReadback(expected, actual).passed, true);
+  assert.equal(protectMath(expected, { native: true }).formulas.length, 1);
+  assert.equal(previewHtml('Metadata', { body: String.raw`模型 \(轮次配置\)`, warnings: [] }).includes('<math'), false);
+  assert.equal(verifyMarkdownReadback(expected, actual.replace('轮次配置', '不同配置')).passed, false);
+  for (const changed of ['x_i^2', '$x_i^3$']) {
+    const result = verifyMarkdownReadback(expected, actual.replace('$x_i^2$', changed));
+    assert.equal(result.passed, false);
+    assert.equal(result.difference.kind, 'math');
+  }
+});
+
 test('Old frozen plans explicitly retain their original text-only math verification', async () => {
   const expected = 'Equation:\n\n\\[a + b\\]\n\nUse `a b` END';
   let content = 'Equation:\n\n[a + b]\n\nUse `a b` END';
@@ -108,7 +123,7 @@ test('Old frozen plans explicitly retain their original text-only math verificat
   assert.equal(result.passed, true);
   assert.equal(result.method, 'markdown-text-and-code-legacy-math');
   assert.deepEqual(result.normalizations, ['legacy-math-as-text']);
-  assert.equal(verifyMarkdownReadback(expected, content).passed, false);
+  assert.equal(verifyMarkdownReadback('Equation: <latex>a + b</latex> Use `a b` END', content).passed, false);
   content = content.replace('a + b', 'a + c');
   assert.equal((await backend.verify({ documentId: 'old-math' }, plan)).passed, false);
   content = 'Equation:\n\n[a + b]\n\nUse `ab` END';
@@ -138,6 +153,37 @@ test('End-to-end plan and backend publish send native formulas, including progre
     return { ok: true, data: { document: { document_id: 'math-doc', content: written } } };
   });
   const receipt = await backend.publish(plan);
-  assert.equal(written, plan.artifact.body);
+  assert.equal(written, larkMarkdown(plan.artifact.body));
+  assert.ok(!written.includes('<latex>'));
   assert.equal((await backend.verify(receipt, plan)).passed, true);
+});
+
+test('Matrix transport decodes XML and preserves row commands, prices and inline code', () => {
+  const tex = String.raw`\begin{pmatrix}
+1 & 2 \\
+3 & 4
+\end{pmatrix}`;
+  const price = '商品价格是 $19.99，另一个商品是 $29.99。代码 `$HOME` 和 `price = "$10"`。';
+  const body = prepareMarkdown('$$\n' + tex + '\n$$\n\n' + price, []);
+  const sent = larkMarkdown(body);
+  assert.ok(sent.includes('$$' + transportTex(tex) + '$$'));
+  assert.ok(!sent.includes('&amp;'));
+  assert.ok(!sent.includes('&#10;'));
+  assert.ok(sent.includes('\\$19.99'));
+  assert.ok(sent.includes('`$HOME` 和 `price = "$10"`'));
+  const verified = verifyMarkdownReadback(body, sent);
+  assert.equal(verified.passed, true);
+  assert.ok(verified.normalizations.includes('math-source-layout'));
+  assert.equal(verifyMarkdownReadback(body, sent.replace('3 & 4', '3 & 5')).passed, false);
+  assert.equal(verifyMarkdownReadback(body, sent.replace('\\\\', '')).passed, false);
+  assert.equal(verifyMarkdownReadback(body, sent.replace('`$HOME`', '`HOME`')).passed, false);
+});
+
+test('TeX comments end before joined lines and escaped percent remains literal', () => {
+  const body = prepareMarkdown('$$\nx % comment\n+ y + 10\\%\n$$', []);
+  const sent = larkMarkdown(body);
+  assert.ok(!sent.includes('comment'));
+  assert.ok(sent.includes('x  + y + 10\\%'));
+  assert.equal(verifyMarkdownReadback(body, sent).passed, true);
+  assert.equal(verifyMarkdownReadback(body, sent.replace('+ y', '+ z')).passed, false);
 });

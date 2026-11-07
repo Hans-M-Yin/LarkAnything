@@ -107,6 +107,18 @@ test('Unrelated skills are never overwritten and the install stops before depend
   assert.equal(setup.calls.length, 0);
 });
 
+test('Skill installation recognizes desktop-owned prefix and preserves its CLI profile and receipts', async t => {
+  const setup = await context(t), prefix = join(setup.homeDir, '.larkanything');
+  await mkdir(join(prefix, 'state'), { recursive: true });
+  await writeFile(join(prefix, '.larkanything-desktop.json'), JSON.stringify({ managedBy: 'larkanything', prefix }));
+  const config = { version: 1, stateDir: 'state', backends: { 'lark-cli': { identity: 'user', executable: 'lark-cli', configDir: join(prefix, 'connections/current') } } };
+  await writeFile(join(prefix, 'config.json'), JSON.stringify(config));
+  await writeFile(join(prefix, 'state/receipt.json'), '{"status":"uncertain"}');
+  await install({ ...setup, agent: 'codex' });
+  assert.deepEqual(JSON.parse(await readFile(join(prefix, 'config.json'), 'utf8')), config);
+  assert.equal(await readFile(join(prefix, 'state/receipt.json'), 'utf8'), '{"status":"uncertain"}');
+});
+
 test('Missing Lark CLI is installed privately from the official package', async t => {
   const setup = await context(t, { missingLark: true });
   const result = await install({ ...setup, agent: 'codex' });

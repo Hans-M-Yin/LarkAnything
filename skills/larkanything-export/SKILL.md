@@ -19,6 +19,8 @@ For initial connection, missing authorization or a request to connect Feishu, re
 
 ## Export with one command
 
+For an irreparably damaged published snapshot, see `docs/RECOVERY.md` in the installed runtime. After the user explicitly authorizes replacing the original document, back it up and use `preview ... --repair` followed by publishing the saved plan. This rebuilds the same document and checkpoints from the actual adapter output. For a known sync append/repair target with an uncertain receipt, `publish --plan ... --recover` performs strict read-only verification; it never replays a write. Ordinary exports never use these flags automatically.
+
 ```bash
 node <skill-root>/scripts/run.mjs publish --channel codex --session <selected-id>
 ```

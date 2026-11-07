@@ -42,13 +42,34 @@
     "setup": "node scripts/install.mjs",
     "test": "node --test",
     "check": "node scripts/check.mjs && tsc --project tsconfig.json",
-    "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo"
+    "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo",
+    "desktop:build": "node desktop/tauri/build.mjs",
+    "desktop:start": "tauri dev",
+    "desktop:check": "tsc -p desktop/tsconfig.json",
+    "desktop:smoke": "node desktop/tauri/smoke.mjs",
+    "desktop:setup:smoke": "node desktop/onboarding-smoke.mjs",
+    "desktop:package:mac": "tauri build --bundles app,dmg",
+    "desktop:package:win": "tauri build --bundles nsis",
+    "native:build": "node scripts/build-native-mac.mjs",
+    "native:package:mac": "node scripts/build-native-mac.mjs --dmg"
   },
   "dependencies": {
+    "fast-xml-parser": "^5.12.0",
+    "fflate": "^0.8.3",
     "katex": "0.18.0",
     "markdown-it": "15.0.3"
   },
   "devDependencies": {
+    "@lobehub/icons-static-svg": "^1.102.0",
+    "@noble/hashes": "^2.4.0",
+    "@tauri-apps/cli": "^2.12.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "lucide-react": "^1.69.0",
+    "playwright": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "typescript": "^7.0.2"
   }
 }

@@ -28,6 +28,29 @@ test('Codex preserves repeated user questions and unmatched events, excludes inj
   assert.deepEqual(result.messages.map(m => m.content[0].text), ['Repeat?', 'Repeat?', 'A distinct event-only message']);
 });
 
+test('Codex filters complete ambient browser envelopes from messages and events, preserving real text', async t => {
+  const browser = '<external_browser_tabs>\n<in-app-browser-context source="ambient-ui-state">\n# In app browser:\n- Current URL: https://example.com/private\n</in-app-browser-context>\n</external_browser_tabs>';
+  const message = (id, role, texts) => ({ type: 'response_item', payload: { type: 'message', id, role, content: texts.map(text => ({ type: 'input_text', text })) } });
+  const literals = [
+    'Explain <external_browser_tabs> please.',
+    '```xml\n' + browser + '\n```',
+    browser + '\nPlease explain this example.',
+    '<external_browser_tabs>user-authored example</external_browser_tabs>',
+  ];
+  const input = await fixture(t, [
+    message('context', 'user', [' \n' + browser + '\n']),
+    { type: 'event_msg', payload: { type: 'user_message', message: browser } },
+    message('mixed', 'user', [browser, '已完成授权']),
+    ...literals.map((text, i) => message(`literal-${i}`, 'user', [text])),
+    message('assistant', 'assistant', [browser]),
+  ]);
+  const model = await codexAdapter.load({ input });
+  assert.deepEqual(model.messages.map(m => m.content.map(p => p.text)), [
+    ['已完成授权'], ...literals.map(text => [text]), [browser],
+  ]);
+  assert.equal(model.source.manifest.excludedContextRecords, 3);
+});
+
 test('Codex fork is visibly partial and malformed logs fail without silently dropping lines', async t => {
   const input = await fixture(t, [{ type: 'session_meta', payload: { id: 'f', forked_from_id: 'parent' } }, { type: 'event_msg', payload: { type: 'user_message', message: 'test' } }]);
   const result = await codexAdapter.load({ input });

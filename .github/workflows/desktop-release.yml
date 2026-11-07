@@ -1,0 +1,92 @@
+name: Desktop release installers
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            command: npm run desktop:package:win
+          - os: macos-15
+            target: aarch64-apple-darwin
+            command: npm run desktop:package:mac
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - run: npm run check
+      - run: npm run desktop:check
+      - run: npm test
+      - name: Build installer with official native CLI
+        run: ${{ matrix.command }} -- --target ${{ matrix.target }}
+        env:
+          APPLE_SIGNING_IDENTITY: '-'
+      - name: Verify Windows executable icon
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/verify-windows-icon.ps1 -ExePath src-tauri/target/${{ matrix.target }}/release/larkanything-desktop.exe
+      - name: Verify macOS app and bundled CLI
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          app='src-tauri/target/${{ matrix.target }}/release/bundle/macos/LarkAnything.app'
+          codesign --verify --deep --strict "$app"
+          file "$app/Contents/MacOS/larkanything-desktop"
+          test -x "$app/Contents/Resources/lark-cli/lark-cli"
+          "$app/Contents/Resources/lark-cli/lark-cli" --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.target }}
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installer-*
+          path: release-assets
+          merge-multiple: true
+      - name: Collect installers and checksums
+        shell: bash
+        run: |
+          mkdir upload
+          find release-assets -type f \( -name '*.exe' -o -name '*.dmg' \) -exec cp {} upload/ \;
+          test "$(find upload -name '*.exe' | wc -l)" -eq 1
+          test "$(find upload -name '*.dmg' | wc -l)" -eq 1
+          cp docs/DESKTOP-INSTALL.md upload/INSTALL.md
+          cd upload
+          sha256sum *.exe *.dmg > SHA256SUMS.txt
+      - name: Upload draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --verify-tag --draft --prerelease --title 'LarkAnything Desktop 0.1.0 Preview' --notes-file docs/DESKTOP-RELEASE-NOTES.md
+          gh release upload "$RELEASE_TAG" upload/* --clobber

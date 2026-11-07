@@ -90,6 +90,21 @@ test('Lark backend passes data via stdin and arguments without shell interpolati
   assert.equal(receipt.warnings[0].code, 'LARK_WARNING');
 });
 
+test('Lark updates accept successful responses without a nested document', async () => {
+  for (const operation of ['append', 'overwrite']) {
+    const calls = [];
+    const backend = new LarkCliBackend({}, async (_executable, args) => {
+      calls.push(args);
+      return { ok: true, data: { document: { revision_id: 2 } } };
+    });
+    const receipt = await backend.publish({ target: { operation, documentId: 'existing-doc' }, artifact: { body: 'text' } });
+    assert.equal(receipt.documentId, 'existing-doc');
+    assert.ok(calls[0].includes(operation));
+  }
+  const backend = new LarkCliBackend({}, async () => ({ ok: true, data: {} }));
+  await assert.rejects(backend.publish({ target: { operation: 'create' }, document: { title: 'test' }, artifact: { body: 'text' } }), { code: 'LARK_RECEIPT' });
+});
+
 test('Lark append uses explicit destination and verifies normalized full text', async () => {
   const calls = [];
   const backend = new LarkCliBackend({}, async (_executable, args) => {

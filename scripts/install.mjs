@@ -22,7 +22,7 @@ export async function runCommand(command, args, options = {}) {
   return exec(command, args, { ...options, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024, timeout: 300000, windowsHide: true });
 }
 
-async function findNpm() {
+export async function findNpm() {
   const candidates = [
     process.env.npm_execpath,
     join(dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'),
@@ -46,6 +46,9 @@ async function ownedOrMissing(path, expectedPrefix) {
   if (!info.isDirectory() || info.isSymbolicLink()) throw new Error(`Refusing to replace this path: ${path}`);
   let marker;
   try { marker = await json(join(path, markerName)); } catch {}
+  if (!marker && resolve(path) === expectedPrefix) {
+    try { marker = await json(join(path, '.larkanything-desktop.json')); } catch {}
+  }
   if (marker?.managedBy !== owner || marker.prefix !== expectedPrefix) throw new Error(`An unrelated installation or folder already exists: ${path}. Choose another --prefix or preserve that folder before continuing.`);
 }
 

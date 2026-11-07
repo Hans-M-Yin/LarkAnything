@@ -37,7 +37,7 @@ function linkEnd(source, start) {
   return start + 2;
 }
 
-function formulaAt(source, start, native) {
+function formulaAt(source, start, native, markdownEscapes) {
   if (escaped(source, start)) return;
   if (native && source.startsWith('<latex>', start)) {
     const end = source.indexOf('</latex>', start + 7);
@@ -48,13 +48,16 @@ function formulaAt(source, start, native) {
     }
   }
   let open, close, display;
-  if (source.startsWith('\\[', start)) { open = '\\['; close = '\\]'; display = true; }
-  else if (source.startsWith('\\(', start)) { open = '\\('; close = '\\)'; display = false; }
+  if (!markdownEscapes && source.startsWith('\\[', start)) { open = '\\['; close = '\\]'; display = true; }
+  else if (!markdownEscapes && source.startsWith('\\(', start)) { open = '\\('; close = '\\)'; display = false; }
   else if (source[start] === '$') {
     display = source[start + 1] === '$';
     open = close = display ? '$$' : '$';
     // Match conventional inline delimiters, not currency such as "$5 and $10".
     if (!display && (/\s/.test(source[start + 1] || '') || !source[start + 1] || source[start - 1] === '$')) return;
+    // A currency amount must not search ahead into another price or code span
+    // for a closing dollar sign (e.g. "$19.99，... $29.99。`$HOME`").
+    if (!display && /^\d+(?:[.,]\d+)*(?=$|[\s，。；：！？,;:!?])/.test(source.slice(start + 1))) return;
   } else return;
   let end = start + open.length;
   while ((end = source.indexOf(close, end)) >= 0) {
@@ -72,7 +75,7 @@ function formulaAt(source, start, native) {
 
 // Hide formulas before Markdown parses headings/emphasis or escapes native tags.
 // Markers cannot collide with authored text and never occur in code or link URLs.
-export function protectMath(source, { native = false } = {}) {
+export function protectMath(source, { native = false, markdownEscapes = native } = {}) {
   let prefix = 'LARKANYTHINGMATHTOKEN';
   while (source.includes(prefix)) prefix += 'X';
   const formulas = [], unclosed = [], ranges = codeRanges(source);
@@ -96,7 +99,7 @@ export function protectMath(source, { native = false } = {}) {
       if (close >= 0) end = close + 1;
     }
     if (end !== undefined) { body += source.slice(index, end); index = end; continue; }
-    const formula = ['\\', '$', '<'].includes(source[index]) ? formulaAt(source, index, native) : undefined;
+    const formula = ['\\', '$', '<'].includes(source[index]) ? formulaAt(source, index, native, markdownEscapes) : undefined;
     if (formula) {
       const marker = `${prefix}${formulas.length}END`;
       formulas.push({ ...formula, marker });
@@ -116,3 +119,23 @@ export function protectMath(source, { native = false } = {}) {
 }
 
 export const nativeFormula = formula => `<latex>${escapeXml(formula.tex)}</latex>`;
+
+// Markdown import treats XML entities as literal TeX and removes physical
+// newlines. Send dollar-delimited TeX on one line instead. A TeX comment ends
+// at its original newline; remove it before joining so it cannot hide math.
+export function transportTex(tex) {
+  return tex.split(/\r\n|\r|\n/).map(line => {
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '%' && !escaped(line, i)) return line.slice(0, i);
+    }
+    return line;
+  }).join(' ').trim();
+}
+
+export function larkMarkdown(body) {
+  const math = protectMath(body, { native: true });
+  return math.restore(math.body, formula => {
+    const delimiter = formula.display ? '$$' : '$';
+    return delimiter + transportTex(formula.tex) + delimiter;
+  });
+}

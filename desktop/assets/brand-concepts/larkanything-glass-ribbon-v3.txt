@@ -1,0 +1,2 @@
+Tool: built-in image_gen. Concept preview.
+Prompt: A refined macOS application icon for LarkAnything. One sculpted satin-glass folded ribbon forms an airy open loop suggesting a flowing page and wing. Continuous rounded curves, blue-to-aquamarine translucent material and deeper cobalt inner face. Pearl-white squircle, subtle convex face and top-left studio highlight. Frontal orthographic view. No text, letters, literal bird head, sharp spear points, heavy shadows, metallic chrome or plastic-toy effect. Quiet Apple-inspired productivity-app craftsmanship.

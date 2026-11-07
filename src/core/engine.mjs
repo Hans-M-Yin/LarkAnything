@@ -19,9 +19,10 @@ export class ExportEngine {
     let document = protocol.format(model, options.format), artifact = renderer.render(document);
     const backend = this.backends.get(options.target.backend);
     let target = { namespace: 'default', ...options.target, identityScope: backend.scope || 'default' }, sync;
+    invariant(!request.repair || target.operation === 'sync', 'SYNC_REPAIR_OPERATION', 'Repair requires the sync operation.');
     if (target.operation === 'sync') {
       invariant(['create', 'append'].every(operation => backend.capabilities.operations.includes(operation)), 'BACKEND_CAPABILITY', 'Conversation sync requires a backend supporting create and append.');
-      ({ target, document, artifact, sync } = await prepareSync({ store: this.store, model, protocol, renderer, options, target, document, artifact, channel: request.channel }));
+      ({ target, document, artifact, sync } = await prepareSync({ store: this.store, model, protocol, renderer, options, target, document, artifact, channel: request.channel, repair: request.repair }));
     }
     backend.validateTarget?.(target);
     invariant(/^[a-z0-9]+$/.test(artifact.extension), 'ARTIFACT_EXTENSION', 'Renderer must declare a safe file extension.');
@@ -50,6 +51,31 @@ export class ExportEngine {
     ]);
     return { directory, artifact: join(directory, `document.${plan.artifact.extension}`), ...(html ? { html: join(directory, 'preview.html') } : {}), plan: join(directory, 'plan.json') };
   }
+  async recover(plan) {
+    const { fingerprint, exportKey, ...payload } = plan;
+    invariant(plan.version === 1 && fingerprint === hash(payload), 'PLAN_MODIFIED', 'Regenerate a modified plan.');
+    invariant(plan.sync && plan.target.documentId && (plan.target.operation === 'append' || (plan.sync.repair && plan.target.operation === 'overwrite')),
+      'SYNC_RECOVER_OPERATION', 'Read-only recovery requires a sync append or explicit in-place repair with a known document.');
+    const backend = this.backends.get(plan.target.backend);
+    invariant(plan.target.identityScope === (backend.scope || 'default'), 'PLAN_IDENTITY', 'Use the original backend identity.');
+    return this.store.withLock(plan.sync.key, () => this.store.withLock(exportKey, async () => {
+      const receipt = await this.store.get(exportKey);
+      const binding = await sessionReceipt(this.store, plan.sync.key);
+      invariant(receipt?.fingerprint === fingerprint && binding?.exportKey === exportKey,
+        'SYNC_STALE_PLAN', 'Recovery requires the current repair receipt.');
+      if (receipt.status === 'verified') return { ...receipt, reused: true };
+      invariant(receipt.status === 'uncertain', 'SYNC_RECOVER_STATE', 'Recovery requires an uncertain repair write.');
+      const previous = await this.store.get(plan.sync.previousExportKey);
+      const remote = { documentId: plan.target.documentId, url: binding.remote?.url || previous?.remote?.url };
+      const verification = await backend.verify(remote, plan);
+      invariant(verification.passed, 'READBACK_MISMATCH', 'Repair recovery did not pass readback; no state was changed.', { verification });
+      Object.assign(receipt, { remote, verification, status: 'verified' });
+      delete receipt.errorCode;
+      await this.store.put(exportKey, receipt);
+      await this.store.put(plan.sync.key, receipt);
+      return receipt;
+    }));
+  }
   async publish(plan) {
     const { fingerprint, exportKey, ...payload } = plan;
     invariant(plan.version === 1 && fingerprint === hash(payload) && typeof exportKey === 'string' && exportKey.length, 'PLAN_MODIFIED', 'The plan was modified after preparation. Regenerate it before publishing.');
@@ -62,13 +88,15 @@ export class ExportEngine {
       if (receipt) {
         invariant(receipt.fingerprint === fingerprint, 'KEY_CONFLICT', 'This export key already represents different content or a different destination. Use a new key.');
         if (receipt.status === 'verified') return { ...receipt, reused: true };
-        if (!receipt.remote?.documentId) throw new LarkAnythingError('WRITE_UNCERTAIN', 'A previous write has an uncertain result. It will not be replayed automatically. Inspect Feishu and the saved receipt before starting a new export.', { exportKey });
+        if (!receipt.remote?.documentId) throw new LarkAnythingError('WRITE_UNCERTAIN', 'A previous write has an uncertain result. It will not be replayed automatically. Inspect Feishu and the saved receipt before starting a new export.', { exportKey, causeCode: receipt.errorCode, diagnostic: receipt.diagnostic });
         // A known successful write is only read back again, never written twice.
       }
       const binding = plan.sync ? await sessionReceipt(this.store, plan.sync.key) : undefined;
       if (plan.sync) {
         invariant((binding?.exportKey || null) === plan.sync.previousExportKey || (receipt && binding?.exportKey === exportKey),
           'SYNC_STALE_PLAN', 'This conversation was published after the plan was prepared. Prepare a new plan to append only the remaining messages.');
+        if (plan.sync.repair && !receipt) invariant(binding?.status === 'verification_failed' && binding.remote?.documentId === plan.target.documentId,
+          'SYNC_REPAIR_STATE', 'The failed document changed after repair was prepared.');
       }
       const save = async () => {
         await this.store.put(exportKey, receipt);
@@ -88,15 +116,17 @@ export class ExportEngine {
         await save();
         try {
           const remote = await backend.publish(plan);
-          if (plan.sync && plan.target.operation === 'append') invariant(remote.documentId === plan.target.documentId, 'SYNC_DOCUMENT', 'The backend returned a different document for this append. Inspect the write before retrying.');
+          if (plan.sync && ['append', 'overwrite'].includes(plan.target.operation)) invariant(remote.documentId === plan.target.documentId, 'SYNC_DOCUMENT', 'The backend returned a different document. Inspect the write before retrying.');
           receipt.remote = remote;
           receipt.status = 'written';
           receipt.warnings = [...receipt.warnings, ...(receipt.remote.warnings || [])];
           await save();
         } catch (error) {
           receipt.status = 'uncertain'; receipt.errorCode = error.code || 'WRITE_ERROR';
+          if (backend.id === 'lark-cli') receipt.diagnostic = Object.fromEntries(
+            ['exitCode', 'signal', 'interrupted', 'cliCode', 'type', 'subtype', 'missingScopes'].filter(key => error.details?.[key] !== undefined).map(key => [key, error.details[key]]));
           await save();
-          throw new LarkAnythingError('WRITE_UNCERTAIN', 'Publishing did not produce a confirmed receipt. The write may have completed; automatic replay is disabled.', { exportKey, causeCode: receipt.errorCode });
+          throw new LarkAnythingError('WRITE_UNCERTAIN', 'Publishing did not produce a confirmed receipt. The write may have completed; automatic replay is disabled.', { exportKey, causeCode: receipt.errorCode, diagnostic: receipt.diagnostic });
         }
       }
       try {

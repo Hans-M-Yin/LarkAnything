@@ -15,13 +15,23 @@ export async function sessionReceipt(store, key) {
   return binding ? await store.get(binding.exportKey) || binding : undefined;
 }
 
-export async function prepareSync({ store, model, protocol, renderer, options, target, document, artifact, channel }) {
+export async function prepareSync({ store, model, protocol, renderer, options, target, document, artifact, channel, repair = false }) {
   invariant(model.kind === 'conversation' && typeof protocol.selectMessages === 'function', 'SYNC_PROTOCOL', 'This protocol does not support message synchronization. Select an explicit backend operation such as create.');
   validateConversation(model);
   invariant(!target.documentId, 'TARGET_CONFLICT', 'Sync finds the document by conversation id. Use append with documentId to select a document manually.');
   const key = prefix + hash({ channel, artifactId: model.id, backend: target.backend,
     namespace: target.namespace, identityScope: target.identityScope, parentToken: target.parentToken || null });
   const previous = await sessionReceipt(store, key);
+  if (repair) {
+    invariant(previous?.status === 'verification_failed' && previous.remote?.documentId,
+      'SYNC_REPAIR_STATE', 'Repair requires a confirmed document whose readback failed. Unknown writes and verified documents cannot be overwritten through repair.');
+    invariant(artifact.body.trim(), 'SYNC_REPAIR_EMPTY', 'Cannot repair a document with empty content.');
+    target = { ...target, operation: 'overwrite', documentId: previous.remote.documentId };
+    delete target.parentToken;
+    return { target, document, artifact, sync: { key, previousExportKey: previous.exportKey,
+      messages: protocol.selectMessages(model, options.format).map(checkpoint),
+      displayGroups: document.coverage.displayGroups || 0, unchanged: false, repair: true } };
+  }
   if (previous && previous.status !== 'verified') {
     throw new LarkAnythingError(['publishing', 'uncertain'].includes(previous.status) ? 'WRITE_UNCERTAIN' : 'SYNC_PENDING',
       'This conversation has an unfinished publish. Retry its saved plan before exporting more messages; an uncertain write must be inspected first.',

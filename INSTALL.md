@@ -1,5 +1,7 @@
 # 给 Codex / Claude Code 的安装说明
 
+如果使用独立桌面 App，请直接打开打包后的程序并完成首次连接引导，见 [桌面安装说明](docs/DESKTOP.md)。桌面包内置飞书 CLI，用户不需要 Node.js、npm 或单独的凭证修复程序。本文以下步骤适用于安装个人 Skill / 命令行运行时。
+
 用户只需要把仓库链接交给 Agent，并说：
 
 > 帮我安装这个仓库里的 LarkAnything，并引导我连接飞书。
