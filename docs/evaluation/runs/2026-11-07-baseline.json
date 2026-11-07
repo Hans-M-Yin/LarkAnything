@@ -1,0 +1,116 @@
+{
+  "createdAt": "2026-11-07T03:03:45.994Z",
+  "commit": "fd0ad62ceda7a4bf5612064beac9f32ace6198df",
+  "node": "v22.17.0",
+  "platform": "win32",
+  "label": "baseline",
+  "scope": "Offline synthetic source contract tests; not live app/account acceptance.",
+  "passed": 4,
+  "failed": 8,
+  "results": [
+    {
+      "id": "DOCX-001",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Localized/custom heading style resolves through styles.xml",
+      "status": "failed",
+      "durationMs": 5,
+      "error": "The input did not match the regular expression /^# QA heading$/m. Input:\n\n'QA heading'\n"
+    },
+    {
+      "id": "DOCX-002",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Paragraphs inside a table cell retain a separator",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "The input did not match the regular expression /First\\s+Second/. Input:\n\n'| FirstSecond |\\n| --- |\\n'\n"
+    },
+    {
+      "id": "DOCX-003",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Malformed XML cannot become a silently partial document",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "Missing expected exception."
+    },
+    {
+      "id": "DOCX-004",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Lost hyperlink destination is explicitly disclosed",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "Hyperlink target disappeared without a specific warning"
+    },
+    {
+      "id": "OC-001",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Millisecond epoch is preserved as the correct calendar time",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ '+058375-12-15T20:26:40.000Z'\n- '2026-05-28T20:26:40.000Z'\n"
+    },
+    {
+      "id": "OC-002",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Unknown content parts cannot be silently discarded",
+      "status": "failed",
+      "durationMs": 6,
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(model.messages[0].content.some(p=>p.type==='unsupported') || model.warnings.length>0)\n"
+    },
+    {
+      "id": "OC-003",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Internal reasoning stays excluded",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "NOTION-001",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Repeated pagination cursor stops with an explicit error",
+      "status": "failed",
+      "durationMs": 1,
+      "error": "The input did not match the regular expression /分页.*重复|重复.*分页/. Input:\n\n'Error: QA_NETWORK_GUARD: repeated requests'\n"
+    },
+    {
+      "id": "NOTION-002",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Invalid search response is not reported as an empty workspace",
+      "status": "failed",
+      "durationMs": 0,
+      "error": "Missing expected rejection."
+    },
+    {
+      "id": "NOTION-003",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Truncated content blocks publication",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "MD-001",
+      "source": "markdown",
+      "level": "mock filesystem",
+      "title": "Preview rereads selected files without corrupting Unicode or code",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "MD-002",
+      "source": "markdown",
+      "level": "mock filesystem",
+      "title": "Oversized input is rejected before reading content",
+      "status": "passed",
+      "durationMs": 0
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-07",
+  "platform": "Windows x64",
+  "branch": "codex/source-evaluation",
+  "releaseAcceptance": "incomplete",
+  "defectsReproducedAndFixed": 10,
+  "offlineCases": { "passed": 17, "failed": 0 },
+  "nodeTests": { "total": 141, "passed": 138, "failed": 0, "skipped": 3 },
+  "skippedReason": "Existing Windows exclusions for three CLI subprocess publish/sync/segmented tests.",
+  "checks": {
+    "syntaxAndCoreTypes": "passed",
+    "desktopTypes": "passed",
+    "desktopBuild": "passed",
+    "cargoDebugBuild": "passed",
+    "onboardingMockSmoke": "passed",
+    "tauriWebView2SyntheticSmoke": "passed",
+    "officialOpenCode1195SyntheticRoundtrip": "passed",
+    "officialOpenCode226SyntheticRoundtrip": "passed",
+    "wordComFixtureCreation": "blocked: no response; test processes stopped",
+    "notionLiveAccount": "not run: no test workspace/integration",
+    "claudeLiveClient": "not run: no test account/client session",
+    "obsidianLiveClient": "not run",
+    "nativeOsFilePicker": "not run",
+    "feishuLivePublishReadback": "not run",
+    "macOS": "not run",
+    "remoteCI": "not run: local branch has not been pushed"
+  },
+  "productionLoginStateChanged": false,
+  "remoteDocumentsCreated": false,
+  "installerUpdated": false
+}

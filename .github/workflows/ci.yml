@@ -20,4 +20,13 @@ jobs:
       - run: npm run desktop:check
       - run: npm run desktop:build
       - run: npm test
+      - run: npm run evaluate:sources -- ci
+        if: ${{ !cancelled() }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-evaluation-${{ matrix.os }}-node${{ matrix.node }}
+          path: .larkanything/evaluation/*/report.json
+          if-no-files-found: ignore
+          retention-days: 14
       - run: npm run demo

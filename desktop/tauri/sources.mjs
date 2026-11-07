@@ -8,11 +8,17 @@ export function createSources({transport = native, command = run} = {}){
  let notionToken='';
  const selected=new Map();
  const notion=(action,id,cursor)=>transport('notion',{token:notionToken,action,id,cursor});
+ const notionList=async cursor=>{
+  const page=await notion('list',null,cursor);
+  if(!page||!Array.isArray(page.results)||typeof page.has_more!=='boolean')throw new Error('Notion 返回的列表格式无效。');
+  if(page.has_more&&(typeof page.next_cursor!=='string'||!page.next_cursor.trim()))throw new Error('Notion 分页结果不完整。');
+  return page;
+ };
  return {
   async connectNotion(token) {
    if(typeof token!=='string'||!token.trim())throw new Error('请输入 Notion 集成令牌，并在 Notion 中为页面添加此连接。');
    const old=notionToken;notionToken=token.trim();
-   try{await notion('list');}catch(e){notionToken=old;throw e;}
+   try{await notionList();}catch(e){notionToken=old;throw e;}
    return true;
   },
   async importFile(channel,path){
@@ -31,15 +37,16 @@ export function createSources({transport = native, command = run} = {}){
     await cliVersion();
     const rows=JSON.parse(await command(['session','list','--format','json']));
     if(!Array.isArray(rows))throw new Error('不支持的 OpenCode 列表格式。');
-    return rows.map(r=>({id:'opencode:'+r.id,title:r.title||r.id,location:r.directory||'',modified:r.time?.updated||r.updated||0}));
+    return rows.map(r=>({id:'opencode:'+r.id,title:r.title||r.id,location:r.location?.directory||r.directory||'',modified:r.time?.updated||r.updated||0}));
    }
    if(!notionToken)throw new Error('请在设置中连接 Notion，并为所需页面添加该连接。');
-   const all=[];let cursor;
+   const all=[];const seen=new Set();let cursor;
    do{
-    const page=await notion('list',null,cursor);
+    const page=await notionList(cursor);
     for(const p of page.results||[])if(p.object==='page')all.push({id:'notion:'+p.id,title:Object.values(p.properties||{}).find(v=>v.type==='title')?.title?.map(t=>t.plain_text).join('')||'未命名页面',location:p.url,modified:Date.parse(p.last_edited_time)||0});
     cursor=page.has_more?page.next_cursor:null;
-    if(page.has_more&&!cursor)throw new Error('Notion 分页结果不完整。');
+    if(cursor&&seen.has(cursor))throw new Error('Notion 分页游标重复，请重新连接后再试。');
+    if(cursor)seen.add(cursor);
    }while(cursor);
    return all;
   },
@@ -50,7 +57,7 @@ export function createSources({transport = native, command = run} = {}){
    }
    const id=item.id.slice(channel.length+1);
    if(channel==='opencode'){
-    const v=await cliVersion();const args=/^v?2\./.test(v)?['session','export',id]:['export',id];
+    const v=await cliVersion();const args=/^(?:opencode\s+)?v?2\./i.test(v)?['session','export',id]:['export',id];
     return openCodeSource(JSON.parse(await command(args)));
    }
    const page=await notion('read',id);

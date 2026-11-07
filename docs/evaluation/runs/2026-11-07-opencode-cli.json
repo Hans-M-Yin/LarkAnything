@@ -1,0 +1,18 @@
+{
+  "createdAt": "2026-11-07T03:17:29.693Z",
+  "scope": "Real OpenCode CLI import/list/export with synthetic sessions; not model generation, GUI, or Feishu publication.",
+  "results": [
+    {
+      "version": "1.19.5",
+      "status": "passed",
+      "stage": "list-export-adapter",
+      "binarySha256": "d7b473388cb62555970e400ce54cdfb6d6573608beea6f8fdf382cd1a698a3fa"
+    },
+    {
+      "version": "opencode v2.2.6",
+      "status": "passed",
+      "stage": "list-export-adapter",
+      "binarySha256": "98cb0aa854c7c015cf6febafa7afb872c359bfe5a823a526f3b4fd347a9e9677"
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "createdAt": "2026-11-07T03:19:23.484Z",
+  "commit": "fd0ad62ceda7a4bf5612064beac9f32ace6198df",
+  "fileHashes": {
+    "src/adapters/desktop-sources.mjs": "0743b670c5d62e8818d5668608259d4162189a67b759e99e8c411166f577c605",
+    "desktop/tauri/sources.mjs": "69b54deff133aa9925df9e5eddd67610d2f03da3a6065798dd5a69db766ca709",
+    "scripts/evaluation/source-cases.mjs": "7f5a9d4d9ac0cbf65f0f5a2da97158fdd90abd44619c1dd17f4e9656d8d6c621"
+  },
+  "node": "v22.17.0",
+  "platform": "win32",
+  "label": "final",
+  "scope": "Offline synthetic source contract tests; not live app/account acceptance.",
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "id": "DOCX-001",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Localized/custom heading style resolves through styles.xml",
+      "status": "passed",
+      "durationMs": 6
+    },
+    {
+      "id": "DOCX-002",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Paragraphs inside a table cell retain a separator",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "DOCX-003",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Malformed XML cannot become a silently partial document",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "id": "DOCX-004",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Lost hyperlink destination is explicitly disclosed",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "DOCX-005",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Inherited headings, explicit body outline and cyclic styles are handled",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "id": "DOCX-006",
+      "source": "docx",
+      "level": "synthetic OOXML",
+      "title": "Auxiliary XML and aggregate expansion obey the same validation limits",
+      "status": "passed",
+      "durationMs": 187
+    },
+    {
+      "id": "OC-001",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Millisecond epoch is preserved as the correct calendar time",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "id": "OC-002",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Unknown content parts cannot be silently discarded",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "OC-003",
+      "source": "opencode",
+      "level": "synthetic CLI output",
+      "title": "Internal reasoning stays excluded",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "OC-004",
+      "source": "opencode",
+      "level": "official CLI version string, synthetic export",
+      "title": "Real V2 version prefix selects the V2 export command",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "id": "OC-005",
+      "source": "opencode",
+      "level": "V2 schema, synthetic transcript",
+      "title": "V2 tagged messages preserve public text, tools, files, and time",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "NOTION-001",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Repeated pagination cursor stops with an explicit error",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "NOTION-002",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Invalid search response is not reported as an empty workspace",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "NOTION-003",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Truncated content blocks publication",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "NOTION-004",
+      "source": "notion",
+      "level": "mock API",
+      "title": "Invalid replacement token response rolls back the active connection",
+      "status": "passed",
+      "durationMs": 0
+    },
+    {
+      "id": "MD-001",
+      "source": "markdown",
+      "level": "mock filesystem",
+      "title": "Preview rereads selected files without corrupting Unicode or code",
+      "status": "passed",
+      "durationMs": 1
+    },
+    {
+      "id": "MD-002",
+      "source": "markdown",
+      "level": "mock filesystem",
+      "title": "Oversized input is rejected before reading content",
+      "status": "passed",
+      "durationMs": 0
+    }
+  ]
+}

@@ -19,7 +19,7 @@ assert.equal(compilation.status,0,compilation.stdout+compilation.stderr);
 await writeFile(join(root,'desktop.json'),JSON.stringify({vault,codexHome,claudeHome,opencodeExecutable:executable}));
 await writeFile(join(root,'config.json'),JSON.stringify({version:1,stateDir:'state',backends:{'lark-cli':{executable}}}));
 const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const port=server.address().port;await new Promise(r=>server.close(r));
-const child=spawn(resolve('src-tauri/target/debug/larkanything-desktop.exe'),[],{windowsHide:true,env:{...process.env,LARKANYTHING_DESKTOP_HOME:root,WEBVIEW2_USER_DATA_FOLDER:join(root,'webview'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:`--remote-debugging-port=${port}`},stdio:'pipe'});
+const child=spawn(resolve(process.env.CARGO_TARGET_DIR||'src-tauri/target','debug/larkanything-desktop.exe'),[],{windowsHide:true,env:{...process.env,LARKANYTHING_DESKTOP_HOME:root,WEBVIEW2_USER_DATA_FOLDER:join(root,'webview'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:`--remote-debugging-port=${port}`},stdio:'pipe'});
 let startup='';child.on('error',e=>startup+=' spawn:'+e.message);child.on('exit',(code,signal)=>startup+=' exit:'+code+' signal:'+signal);child.stderr.on('data',v=>startup+=v);child.stdout.on('data',v=>startup+=v);
 let browser;
 try {
@@ -46,6 +46,13 @@ try {
   await page.keyboard.press('Control+2');
   await page.getByText('这里还没有内容',{exact:true}).waitFor();
   assert.equal(await page.getByRole('textbox',{name:'搜索内容'}).inputValue(),'');
+  await mkdir(join(claudeHome,'projects','qa'),{recursive:true});
+  await copyFile('examples/claude-code.jsonl',join(claudeHome,'projects','qa','sample.jsonl'));
+  await page.keyboard.press('Control+r');await page.locator('.item').first().waitFor();
+  await page.locator('.item').first().click();await page.getByRole('button',{name:'预览',exact:true}).click();
+  await page.frameLocator('iframe').locator('article').waitFor({state:'visible'});
+  assert.match(await page.frameLocator('iframe').locator('body').innerText(),/Claude|assistant/i);
+  await page.getByRole('button',{name:'收起预览',exact:true}).first().click();await page.waitForFunction(()=>innerWidth===420);
   await page.keyboard.press('Control+1');await page.locator('.item').first().waitFor();
   await page.evaluate(()=>window.__shortcutReloadGuard=true);
   await page.keyboard.press('Control+r');await page.locator('.item').first().waitFor();
@@ -143,6 +150,6 @@ try {
     try{await window.__TAURI__.core.invoke('native',{op:'process_start',args:{executable:'opencode',args:['session','delete','ses_test']}});return false;}catch{return true;}
   });assert.equal(rejected,true);
   assert.deepEqual(errors,[]);
-  await writeFile(join(root,'result.json'),JSON.stringify({ok:true,checks:['real-tauri-webview2','worker-core-parity','source-icons-layout','unicode-preview','theme','settings','native-cli-local-publish-readback','uncertain-no-replay','exclusive-lock','path-scope','keyboard-shortcuts','preview-keyboard-focus','modal-keyboard-guards','streaming-cancel','timeout','reduced-motion'],screenshots:['home.png','preview.png','dark.png']},null,2));
+  await writeFile(join(root,'result.json'),JSON.stringify({ok:true,scope:'Real Tauri/WebView2, synthetic source data and fake publish CLI; no live account acceptance or OS file-picker automation.',checks:['real-tauri-webview2','worker-core-parity','claude-fixture-discovery-preview','source-icons-layout','unicode-preview','theme','settings','native-cli-local-publish-readback','uncertain-no-replay','exclusive-lock','path-scope','keyboard-shortcuts','preview-keyboard-focus','modal-keyboard-guards','streaming-cancel','timeout','reduced-motion','markdown-import-preview','docx-import-preview','opencode-fake-cli-preview'],screenshots:['home.png','preview.png','dark.png','word-source.png']},null,2));
   console.log(`Tauri native smoke passed. Local fake CLI only. Results: ${root}`);
 } finally {await browser?.close();child.kill();}

@@ -41,6 +41,7 @@
   "scripts": {
     "setup": "node scripts/install.mjs",
     "test": "node --test",
+    "evaluate:sources": "node scripts/evaluation/run.mjs",
     "check": "node scripts/check.mjs && tsc --project tsconfig.json",
     "demo": "node bin/larkanything.mjs preview --channel codex --input examples/codex.jsonl --out .larkanything/demo",
     "desktop:build": "node desktop/tauri/build.mjs",
