@@ -127,3 +127,11 @@ Notion 使用 API，不要求安装桌面客户端。真实验收需要工作区
 - Tauri/WebView2 冒烟：虚构令牌写入隔离系统存储，WebView/worker 重建后显示已保存且输入框为空；点击删除后再次重建确认清除；飞书保存位置保留。结果在 `.larkanything/tauri-smoke-1794032795301/result.json`。
 - Core/桌面 TypeScript、构建检查及 Windows debug 编译通过。macOS 已实现对应后端，但尚未实机验收。
 - 当前只更新本地开发测试版，尚未推送或替换 GitHub 安装包。
+
+## 2026-11-07：DMG 拖拽布局
+
+- 用户在真实 Mac 上反馈只有普通 Finder 图标，缺少预期拖拽安装布局；改用 dmgbuild 直接写入布局，保留 Tauri App 打包。
+- 初次挂载检查捕获 `hide_extensions` 使用 SetFile 写入 FinderInfo，导致映像内 App 签名结构校验失败；已移除该元数据写入，不关闭签名校验。失败构建未发布。
+- 修复提交 `8309e0d` 的 macOS ARM64 构建通过：实际挂载 DMG，验证 Applications 链接、两侧图标坐标、图片背景、App 签名结构及内置 CLI。窗口大小为 640×280，图标坐标分别为 (140,120) 和 (500,120)。
+- 构建证据：[GitHub Actions](https://github.com/Hans-M-Yin/LarkAnything/actions/runs/42350617709)，另有 `macos-dmg-verification` 附件。真实 Mac 上的最终视觉效果仍需用户确认。
+- 公证状态明确为 `not-configured`：项目所有者暂无付费 Apple Developer Program 会员。Developer ID 配置路径已准备，但签名、公证及 Gatekeeper 正式放行没有实际验收；当前预览包仍会出现 Apple 验证提示。

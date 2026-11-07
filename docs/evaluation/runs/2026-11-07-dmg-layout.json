@@ -1,0 +1,24 @@
+{
+  "commit": "8309e0d",
+  "run": "https://github.com/Hans-M-Yin/LarkAnything/actions/runs/42350617709",
+  "layout": "verified",
+  "applicationShortcut": "verified",
+  "appSignature": "verified",
+  "notarization": "not-configured",
+  "windowSize": [
+    640,
+    280
+  ],
+  "iconPositions": {
+    "LarkAnything.app": [
+      140,
+      120
+    ],
+    "Applications": [
+      500,
+      120
+    ]
+  },
+  "visualAcceptance": "Requires opening on a real Mac",
+  "fixedPackagingDefect": "Removed FinderInfo modification by hide_extensions; actual DMG signature check passed after fix"
+}
